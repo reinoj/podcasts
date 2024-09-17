@@ -1,0 +1,188 @@
+// ignore_for_file: non_constant_identifier_names
+// I like having the time unit separated by an underscore at the end of the variable
+
+import 'dart:developer' as developer;
+import 'dart:io';
+
+import 'package:flutter/services.dart';
+
+import 'package:html/dom.dart';
+import 'package:html/parser.dart' show parse;
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:xml/xml.dart';
+
+class PodcastInfo {
+  final String title;
+  final String lastBuildDate;
+  final String hosts;
+  final List<PodcastItem> items;
+
+  PodcastInfo(this.title, this.lastBuildDate, this.hosts, this.items);
+}
+
+class PodcastItem {
+  final String title;
+  final String pubDate;
+  final String description;
+  final String duration_min;
+  final String url;
+
+  PodcastItem(this.title, this.pubDate, this.description, this.duration_min, this.url);
+}
+
+Future<XmlDocument?> getXmlDocumentFromURL(String url) async {
+  Uri uri = Uri.parse(url);
+  if (!uri.isAbsolute) {
+    developer.log('URL is invalid');
+    return null;
+  }
+  http.Response response = await http.get(uri);
+
+  try {
+    return XmlDocument.parse(response.body);
+  } on XmlParserException {
+    developer.log('XmlParserException: Error parsing XML document');
+  } on XmlTagException {
+    developer.log('XmlTagException: XML document end tag doesn\'t match the open tag.');
+  } catch (e) {
+    developer.log('Error parsing XML: $e');
+  }
+
+  return null;
+}
+
+Future<XmlDocument> getXmlDocumentFromFile(AssetBundle rootBundleContext, String filePath) async {
+  String xmlFile = await rootBundleContext.loadString(filePath);
+  return XmlDocument.parse(xmlFile);
+}
+
+XmlElement? findAndCheckForElement(XmlElement root, String elementName) {
+  Iterable<XmlElement> elementIter = root.findElements(elementName);
+  if (elementIter.isEmpty) {
+    developer.log("No '$elementName' element in channel.");
+    return null;
+  }
+  return elementIter.singleOrNull;
+}
+
+PodcastItem? getPodcastItem(XmlElement element) {
+  XmlElement? xmlTitle = findAndCheckForElement(element, 'title');
+  if (null == xmlTitle) {
+    return null;
+  }
+  // they forgot the colon after the date in the beginning of some of episode titles
+  String title = xmlTitle.innerText.substring(11).trim();
+
+  XmlElement? xmlDescription = findAndCheckForElement(element, 'description');
+  if (null == xmlDescription) {
+    return null;
+  }
+  // parse the paragraph tag
+  Document p = parse(xmlDescription.innerText);
+  if (null == p.body) {
+    return null;
+  }
+  String description = p.body!.text;
+  int i = description.lastIndexOf('Timestamps');
+  if (-1 != i) {
+    description = description.substring(0, i);
+  }
+
+  XmlElement? pubDate = findAndCheckForElement(element, 'pubDate');
+  if (null == pubDate) {
+    return null;
+  }
+  // just keep the day and date
+  String shortenedDate = pubDate.innerText.substring(0, 16);
+
+  XmlElement? xmlDuration = findAndCheckForElement(element, 'itunes:duration');
+  if (null == xmlDuration) {
+    return null;
+  }
+  int? duration_s = int.tryParse(xmlDuration.innerText);
+  if (null == duration_s) {
+    return null;
+  }
+  int duration_min = (duration_s / 60).floor();
+
+  XmlElement? enclosure = findAndCheckForElement(element, 'enclosure');
+  if (null == enclosure) {
+    return null;
+  }
+
+  String? url = enclosure.getAttribute('url');
+  if (null == url) {
+    return null;
+  }
+
+  // String? xmlLength = enclosure.getAttribute('length');
+  // if (null == xmlLength) {
+  //   return null;
+  // }
+  // int? length = int.tryParse(xmlLength);
+  // if (null == length) {
+  //   return null;
+  // }
+
+  return PodcastItem(title, shortenedDate, description, duration_min.toString(), url);
+}
+
+void savePodcastImage(XmlElement image, String title) async {
+  String url = image.attributes.single.value;
+  Uri uri = Uri.parse(url);
+  if (!uri.isAbsolute) {
+    developer.log('URL is invalid');
+    return null;
+  }
+  http.Response response = await http.get(uri);
+
+  String fileType = url.substring(url.length - 3).toLowerCase();
+  if ('jpg' != fileType && 'png' != fileType) {
+    developer.log('Unsupported image format "$fileType". Currently only jpg and png is supported.');
+  }
+
+  Directory directory = await getApplicationDocumentsDirectory();
+  File wFile = File('${directory.path}/nojcasts/$title.$fileType');
+  wFile.writeAsBytesSync(response.bodyBytes);
+}
+
+PodcastInfo? getPodcastInfo(XmlElement channel, bool getItems) {
+  XmlElement? title = findAndCheckForElement(channel, 'title');
+  if (null == title) {
+    return null;
+  }
+
+  XmlElement? lastBuildDate = findAndCheckForElement(channel, 'lastBuildDate');
+  if (null == lastBuildDate) {
+    return null;
+  }
+
+  XmlElement? hosts = findAndCheckForElement(channel, 'itunes:author');
+  if (null == hosts) {
+    return null;
+  }
+
+  if (getItems) {
+    List<XmlElement> itemIter = channel.findElements('item').toList();
+
+    List<PodcastItem> podcastItemList = List.empty(growable: true);
+    for (XmlElement item in itemIter) {
+      PodcastItem? podcastItem = getPodcastItem(item);
+      if (null == podcastItem) {
+        return null;
+      }
+      podcastItemList.add(podcastItem);
+    }
+
+    return PodcastInfo(title.innerText, lastBuildDate.innerText, hosts.innerText, podcastItemList);
+  } else {
+    XmlElement? image = findAndCheckForElement(channel, 'itunes:image');
+    if (null == image) {
+      return null;
+    }
+    savePodcastImage(image, title.innerText);
+
+    return PodcastInfo(title.innerText, lastBuildDate.innerText, hosts.innerText, []);
+  }
+}
