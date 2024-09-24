@@ -3,11 +3,12 @@ import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:nojcasts/profile.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'add_page.dart';
 import 'home_page.dart';
+import 'globals.dart';
+import 'podcast_overview.dart';
+import 'profile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -51,18 +52,36 @@ class _MainScaffoldState extends State<MainScaffold> {
     const HomePage(),
     const AddPage(),
   ];
+  Profile? _profile;
+
+  void updateProfile(Profile newProfile, File wFile) {
+    setState(() {
+      _profile = newProfile;
+    });
+    wFile.writeAsStringSync(jsonEncode(_profile!.toJson()));
+  }
 
   void initFolderAndProfile() async {
-    Directory documentsDir = await getApplicationDocumentsDirectory();
-    Directory nojcastsDir = Directory('${documentsDir.path}/nojcasts');
-    if (!nojcastsDir.existsSync()) {
-      nojcastsDir.createSync(recursive: true);
-      developer.log('Created nojcasts directory in documents directory.');
+    await Globals.initGlobals();
+    Globals? globals = Globals.getGlobals();
+    if (globals == null) {
+      return;
     }
 
-    File profile = File('${nojcastsDir.path}/profile.json');
-    if (!profile.existsSync()) {
-      profile.writeAsStringSync(jsonEncode(Profile(podcasts: []).toJson()));
+    Directory nojcastsDir = Directory(globals.nojcastsPath);
+    if (nojcastsDir.existsSync()) {
+      Directory podDir = Directory(globals.podcastPath);
+      podDir.createSync(recursive: true);
+      Directory imgDir = Directory(globals.imagePath);
+      imgDir.createSync(recursive: true);
+      developer.log('Created nojcasts, podcasts, and images directories.');
+    }
+
+    File profileFile = File('${globals.nojcastsPath}/profile.json');
+    if (!profileFile.existsSync()) {
+      updateProfile(Profile(podcasts: []), profileFile);
+    } else {
+      _profile = Profile.fromJson(await getProfile());
     }
   }
 
@@ -78,6 +97,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        centerTitle: true,
         title: Text(widget.title),
       ),
       body: _navigationOptions[_currentBottomIndex],

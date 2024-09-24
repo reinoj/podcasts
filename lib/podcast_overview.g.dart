@@ -9,11 +9,11 @@ part of 'podcast_overview.dart';
 PodcastOverview _$PodcastOverviewFromJson(Map<String, dynamic> json) =>
     PodcastOverview(
       title: json['title'] as String,
-      lastUpdated: json['lastUpdated'] as String,
+      url: json['url'] as String,
     );
 
 Map<String, dynamic> _$PodcastOverviewToJson(PodcastOverview instance) =>
     <String, dynamic>{
       'title': instance.title,
-      'lastUpdated': instance.lastUpdated,
+      'url': instance.url,
     };

@@ -9,9 +9,9 @@ part 'podcast_overview.g.dart';
 @JsonSerializable()
 class PodcastOverview {
   final String title;
-  final String lastUpdated;
+  final String url;
 
-  PodcastOverview({required this.title, required this.lastUpdated});
+  PodcastOverview({required this.title, required this.url});
 
   factory PodcastOverview.fromJson(Map<String, dynamic> json) => _$PodcastOverviewFromJson(json);
 

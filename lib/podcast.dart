@@ -4,8 +4,6 @@
 import 'dart:developer' as developer;
 import 'dart:io';
 
-import 'package:flutter/services.dart';
-
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
@@ -14,11 +12,10 @@ import 'package:xml/xml.dart';
 
 class PodcastInfo {
   final String title;
-  final String lastBuildDate;
   final String hosts;
   final List<PodcastItem> items;
 
-  PodcastInfo(this.title, this.lastBuildDate, this.hosts, this.items);
+  PodcastInfo(this.title, this.hosts, this.items);
 }
 
 class PodcastItem {
@@ -31,16 +28,9 @@ class PodcastItem {
   PodcastItem(this.title, this.pubDate, this.description, this.duration_min, this.url);
 }
 
-Future<XmlDocument?> getXmlDocumentFromURL(String url) async {
-  Uri uri = Uri.parse(url);
-  if (!uri.isAbsolute) {
-    developer.log('URL is invalid');
-    return null;
-  }
-  http.Response response = await http.get(uri);
-
+XmlDocument? parseXmlString(String contents) {
   try {
-    return XmlDocument.parse(response.body);
+    return XmlDocument.parse(contents);
   } on XmlParserException {
     developer.log('XmlParserException: Error parsing XML document');
   } on XmlTagException {
@@ -52,9 +42,27 @@ Future<XmlDocument?> getXmlDocumentFromURL(String url) async {
   return null;
 }
 
-Future<XmlDocument> getXmlDocumentFromFile(AssetBundle rootBundleContext, String filePath) async {
-  String xmlFile = await rootBundleContext.loadString(filePath);
-  return XmlDocument.parse(xmlFile);
+Future<XmlDocument?> getXmlDocumentFromURL(String url) async {
+  Uri uri = Uri.parse(url);
+  if (!uri.isAbsolute) {
+    developer.log('URL is invalid');
+    return null;
+  }
+  http.Response response = await http.get(uri);
+
+  return parseXmlString(response.body);
+}
+
+Future<XmlDocument?> getXmlDocumentFromFile(String title) async {
+  Directory dir = await getApplicationDocumentsDirectory();
+  File podcastFile = File('${dir.path}/nojcasts/podcasts/$title.xml');
+  if (!podcastFile.existsSync()) {
+    developer.log('File "$title.xml" does not exist');
+    return null;
+  }
+
+  String contents = podcastFile.readAsStringSync();
+  return parseXmlString(contents);
 }
 
 XmlElement? findAndCheckForElement(XmlElement root, String elementName) {
@@ -68,62 +76,64 @@ XmlElement? findAndCheckForElement(XmlElement root, String elementName) {
 
 PodcastItem? getPodcastItem(XmlElement element) {
   XmlElement? xmlTitle = findAndCheckForElement(element, 'title');
-  if (null == xmlTitle) {
+  if (xmlTitle == null) {
     return null;
   }
-  // they forgot the colon after the date in the beginning of some of episode titles
-  String title = xmlTitle.innerText.substring(11).trim();
+  String title = xmlTitle.innerText;
 
   XmlElement? xmlDescription = findAndCheckForElement(element, 'description');
-  if (null == xmlDescription) {
+  if (xmlDescription == null) {
     return null;
   }
+
   // parse the paragraph tag
   Document p = parse(xmlDescription.innerText);
-  if (null == p.body) {
+  if (p.body == null) {
     return null;
   }
+
   String description = p.body!.text;
+  if (description.isEmpty) {
+    XmlElement? xmlSummary = findAndCheckForElement(element, 'itunes:summary');
+    if (xmlSummary != null) {
+      p = parse(xmlSummary.innerText);
+      if (p.body != null) {
+        description = p.body!.text;
+      }
+    }
+  }
+
   int i = description.lastIndexOf('Timestamps');
-  if (-1 != i) {
+  if (i != -1) {
     description = description.substring(0, i);
   }
 
   XmlElement? pubDate = findAndCheckForElement(element, 'pubDate');
-  if (null == pubDate) {
+  if (pubDate == null) {
     return null;
   }
   // just keep the day and date
   String shortenedDate = pubDate.innerText.substring(0, 16);
 
   XmlElement? xmlDuration = findAndCheckForElement(element, 'itunes:duration');
-  if (null == xmlDuration) {
+  if (xmlDuration == null) {
     return null;
   }
   int? duration_s = int.tryParse(xmlDuration.innerText);
-  if (null == duration_s) {
+  if (duration_s == null) {
     return null;
   }
   int duration_min = (duration_s / 60).floor();
 
   XmlElement? enclosure = findAndCheckForElement(element, 'enclosure');
-  if (null == enclosure) {
+  if (enclosure == null) {
     return null;
   }
 
   String? url = enclosure.getAttribute('url');
-  if (null == url) {
+  if (url == null) {
     return null;
   }
-
-  // String? xmlLength = enclosure.getAttribute('length');
-  // if (null == xmlLength) {
-  //   return null;
-  // }
-  // int? length = int.tryParse(xmlLength);
-  // if (null == length) {
-  //   return null;
-  // }
 
   return PodcastItem(title, shortenedDate, description, duration_min.toString(), url);
 }
@@ -143,18 +153,20 @@ void savePodcastImage(XmlElement image, String title) async {
   }
 
   Directory directory = await getApplicationDocumentsDirectory();
-  File wFile = File('${directory.path}/nojcasts/$title.$fileType');
+  File wFile = File('${directory.path}/nojcasts/images/$title.$fileType');
   wFile.writeAsBytesSync(response.bodyBytes);
 }
 
-PodcastInfo? getPodcastInfo(XmlElement channel, bool getItems) {
-  XmlElement? title = findAndCheckForElement(channel, 'title');
-  if (null == title) {
+PodcastInfo? getPodcastInfo(XmlDocument document, bool getItems) {
+  Iterable<XmlElement> channelIter = document.findAllElements('channel');
+  if (channelIter.isEmpty) {
+    developer.log('Invalid XML from RSS feed.');
     return null;
   }
+  XmlElement channel = channelIter.single;
 
-  XmlElement? lastBuildDate = findAndCheckForElement(channel, 'lastBuildDate');
-  if (null == lastBuildDate) {
+  XmlElement? title = findAndCheckForElement(channel, 'title');
+  if (null == title) {
     return null;
   }
 
@@ -175,14 +187,23 @@ PodcastInfo? getPodcastInfo(XmlElement channel, bool getItems) {
       podcastItemList.add(podcastItem);
     }
 
-    return PodcastInfo(title.innerText, lastBuildDate.innerText, hosts.innerText, podcastItemList);
-  } else {
-    XmlElement? image = findAndCheckForElement(channel, 'itunes:image');
-    if (null == image) {
-      return null;
-    }
-    savePodcastImage(image, title.innerText);
-
-    return PodcastInfo(title.innerText, lastBuildDate.innerText, hosts.innerText, []);
+    return PodcastInfo(title.innerText, hosts.innerText, podcastItemList);
   }
+
+  XmlElement? image = findAndCheckForElement(channel, 'itunes:image');
+  if (null == image) {
+    return null;
+  }
+  savePodcastImage(image, title.innerText);
+
+  return PodcastInfo(title.innerText, hosts.innerText, []);
+}
+
+Future<PodcastInfo?> getPodcastInfoFromFile(String title) async {
+  XmlDocument? document = await getXmlDocumentFromFile(title);
+  if (document == null) {
+    return null;
+  }
+
+  return getPodcastInfo(document, true);
 }

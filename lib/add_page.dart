@@ -1,12 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:nojcasts/podcast_overview.dart';
+import 'package:nojcasts/globals.dart';
 
-import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
 
 import 'podcast.dart';
+import 'podcast_overview.dart';
+import 'profile.dart';
 
 class AddPage extends StatefulWidget {
   const AddPage({super.key});
@@ -34,17 +36,7 @@ class _AddPageState extends State<AddPage> {
       return;
     }
 
-    Iterable<XmlElement> channelIter = document.findAllElements('channel');
-    if (channelIter.isEmpty) {
-      SnackBar snackBar = const SnackBar(content: Text('Invalid XML from RSS feed.'));
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      }
-      return;
-    }
-    XmlElement channel = channelIter.single;
-
-    PodcastInfo? podcastInfo = getPodcastInfo(channel, false);
+    PodcastInfo? podcastInfo = getPodcastInfo(document, false);
     if (null == podcastInfo) {
       SnackBar snackBar = const SnackBar(content: Text('Unable to serialize RSS feed.'));
       if (context.mounted) {
@@ -53,23 +45,38 @@ class _AddPageState extends State<AddPage> {
       return;
     }
 
-    Directory directory = await getApplicationDocumentsDirectory();
-    File wFile = File('${directory.path}/nojcasts/${podcastInfo.title}.xml');
-    wFile.writeAsStringSync(document.toString());
-
-    Map<String, dynamic> profile = await getProfile();
-    List<PodcastOverview> allPodcasts = List<PodcastOverview>.from(profile['podcasts']);
-    for (int i = 0; i < allPodcasts.length; i++) {
-      if (allPodcasts.elementAt(i).title == podcastInfo.title) {
+    Map<String, dynamic> profileMap = await getProfile();
+    Profile profile = Profile.fromJson(profileMap);
+    // List<PodcastOverview> allPodcasts = List<PodcastOverview>.from(profile['podcasts']);
+    bool exists = false;
+    for (int i = 0; i < profile.podcasts.length; i++) {
+      if (profile.podcasts.elementAt(i).title == podcastInfo.title) {
+        exists = true;
         break;
       }
     }
 
-    if (true) {}
+    if (exists) {
+      SnackBar snackBar = SnackBar(content: Text('Already have ${podcastInfo.title} RSS feed saved.'));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+    } else {
+      Globals? globals = Globals.getGlobals();
+      if (globals != null) {
+        File wFile = File('${globals.podcastPath}/${podcastInfo.title}.xml');
+        wFile.writeAsStringSync(document.toString());
 
-    SnackBar snackBar = SnackBar(content: Text('Successfully added RSS feed for ${podcastInfo.title}.'));
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        profile.podcasts.add(PodcastOverview(title: podcastInfo.title, url: _addController.text));
+
+        File profileWFile = File('${globals.nojcastsPath}/profile.json');
+        profileWFile.writeAsStringSync(jsonEncode(Profile(podcasts: profile.podcasts).toJson()));
+
+        SnackBar snackBar = SnackBar(content: Text('Successfully added RSS feed for ${podcastInfo.title}.'));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        }
+      }
     }
 
     _addController.text = '';
