@@ -2,28 +2,6 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-class Globals2 {
-  late String documentsPath;
-  late String nojcastsPath;
-  late String podcastPath;
-  late String imagePath;
-
-  static final Globals2 _globals = Globals2._create();
-
-  factory Globals2() {
-    return _globals;
-  }
-
-  Globals2._create() {
-    getApplicationDocumentsDirectory().then((Directory dir) {
-      documentsPath = dir.path;
-      nojcastsPath = '$documentsPath/nojcasts';
-      podcastPath = '$nojcastsPath/podcasts';
-      imagePath = '$nojcastsPath/images';
-    });
-  }
-}
-
 class Globals {
   late String documentsPath;
   late String nojcastsPath;

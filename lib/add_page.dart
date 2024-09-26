@@ -1,14 +1,6 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:nojcasts/globals.dart';
-
-import 'package:xml/xml.dart';
 
 import 'podcast.dart';
-import 'podcast_overview.dart';
-import 'profile.dart';
 
 class AddPage extends StatefulWidget {
   const AddPage({super.key});
@@ -27,55 +19,17 @@ class _AddPageState extends State<AddPage> {
   }
 
   void getNewRSS(BuildContext context) async {
-    XmlDocument? document = await getXmlDocumentFromURL(_addController.text);
-    if (null == document) {
-      SnackBar snackBar = const SnackBar(content: Text('Issue getting RSS feed.'));
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      }
-      return;
-    }
-
-    PodcastInfo? podcastInfo = getPodcastInfo(document, false);
-    if (null == podcastInfo) {
-      SnackBar snackBar = const SnackBar(content: Text('Unable to serialize RSS feed.'));
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      }
-      return;
-    }
-
-    Map<String, dynamic> profileMap = await getProfile();
-    Profile profile = Profile.fromJson(profileMap);
-    // List<PodcastOverview> allPodcasts = List<PodcastOverview>.from(profile['podcasts']);
-    bool exists = false;
-    for (int i = 0; i < profile.podcasts.length; i++) {
-      if (profile.podcasts.elementAt(i).title == podcastInfo.title) {
-        exists = true;
-        break;
-      }
-    }
-
-    if (exists) {
-      SnackBar snackBar = SnackBar(content: Text('Already have ${podcastInfo.title} RSS feed saved.'));
+    bool succeeded = await downloadRss(_addController.text, false);
+    if (succeeded) {
+      SnackBar snackBar = const SnackBar(content: Text('Successfully added RSS feed.'));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
     } else {
-      Globals? globals = Globals.getGlobals();
-      if (globals != null) {
-        File wFile = File('${globals.podcastPath}/${podcastInfo.title}.xml');
-        wFile.writeAsStringSync(document.toString());
-
-        profile.podcasts.add(PodcastOverview(title: podcastInfo.title, url: _addController.text));
-
-        File profileWFile = File('${globals.nojcastsPath}/profile.json');
-        profileWFile.writeAsStringSync(jsonEncode(Profile(podcasts: profile.podcasts).toJson()));
-
-        SnackBar snackBar = SnackBar(content: Text('Successfully added RSS feed for ${podcastInfo.title}.'));
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-        }
+      SnackBar snackBar =
+          const SnackBar(content: Text('Unable to add RSS feed. Yell at the developer for the reason.'));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
     }
 

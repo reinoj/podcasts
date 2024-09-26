@@ -41,7 +41,10 @@ class _HomePageState extends State<HomePage> {
     if (_loaded) {
       return ListView.separated(
         itemBuilder: (BuildContext ctx, int index) {
-          return PodcastTile(podcastOverview: _allPodcasts.elementAt(index));
+          return PodcastTile(
+            podcastOverview: _allPodcasts.elementAt(index),
+            loadProfile: loadProfile,
+          );
         },
         separatorBuilder: (BuildContext ctx, int index) {
           return const SizedBox(height: 8.0);
@@ -58,25 +61,40 @@ class _HomePageState extends State<HomePage> {
 }
 
 class PodcastTile extends StatefulWidget {
-  const PodcastTile({super.key, required this.podcastOverview});
+  const PodcastTile({super.key, required this.podcastOverview, required this.loadProfile});
   final PodcastOverview podcastOverview;
+  final Function() loadProfile;
 
   @override
   State<PodcastTile> createState() => _PodcastTileState();
 }
 
 class _PodcastTileState extends State<PodcastTile> {
-  late File _img;
+  // late File _img;
+  late Image _img;
+
+  void loadImg() {
+    imageCache.clear();
+    Globals? globals = Globals.getGlobals();
+    if (globals != null) {
+      File img = File('${globals.imagePath}/${widget.podcastOverview.title}.jpg');
+      if (!img.existsSync()) {
+        img = File('${globals.imagePath}/${widget.podcastOverview.title}.png');
+      }
+      setState(() {
+        _img = Image.file(
+          img,
+          width: 75.0,
+          height: 75.0,
+          fit: BoxFit.fill,
+        );
+      });
+    }
+  }
 
   @override
   void initState() {
-    Globals? globals = Globals.getGlobals();
-    if (globals != null) {
-      _img = File('${globals.imagePath}/${widget.podcastOverview.title}.jpg');
-      if (!_img.existsSync()) {
-        _img = File('${globals.imagePath}/${widget.podcastOverview.title}.png');
-      }
-    }
+    loadImg();
     super.initState();
   }
 
@@ -92,14 +110,17 @@ class _PodcastTileState extends State<PodcastTile> {
             return;
           }
 
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => PodcastPage(
-                podcastInfo: podcastInfo,
+                initialPodcastInfo: podcastInfo,
+                rssUrl: widget.podcastOverview.url,
               ),
             ),
           );
+          widget.loadProfile();
+          loadImg();
         }
       },
       child: Container(
@@ -112,19 +133,11 @@ class _PodcastTileState extends State<PodcastTile> {
         padding: const EdgeInsets.all(4.0),
         child: Row(
           children: [
-            // Expanded(
-            // child:
-            Image.file(
-              _img,
-              width: 75.0,
-              height: 75.0,
-              fit: BoxFit.contain,
-            ),
-            // ),
+            _img,
             const SizedBox(width: 8.0),
             Text(
               widget.podcastOverview.title,
-              style: TextStyle(fontSize: 18.0, color: Theme.of(context).colorScheme.onPrimary),
+              style: TextStyle(fontSize: 24.0, color: Theme.of(context).colorScheme.onPrimary),
             ),
           ],
         ),

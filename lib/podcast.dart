@@ -1,12 +1,16 @@
 // ignore_for_file: non_constant_identifier_names
 // I like having the time unit separated by an underscore at the end of the variable
 
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
+import 'package:nojcasts/globals.dart';
+import 'package:nojcasts/podcast_overview.dart';
+import 'package:nojcasts/profile.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
 
@@ -23,9 +27,71 @@ class PodcastItem {
   final String pubDate;
   final String description;
   final String duration_min;
-  final String url;
+  final String mp3Url;
 
-  PodcastItem(this.title, this.pubDate, this.description, this.duration_min, this.url);
+  PodcastItem(this.title, this.pubDate, this.description, this.duration_min, this.mp3Url);
+}
+
+Future<bool> downloadRss(String url, bool update) async {
+  XmlDocument? document = await getXmlDocumentFromURL(url);
+  if (null == document) {
+    return false;
+  }
+
+  PodcastInfo? podcastInfo = getPodcastInfo(document, true, false);
+  if (null == podcastInfo) {
+    return false;
+  }
+
+  Profile profile = Profile.fromJson(await getProfile());
+  bool exists = false;
+  for (int i = 0; i < profile.podcasts.length; i++) {
+    if (profile.podcasts.elementAt(i).title == podcastInfo.title) {
+      exists = true;
+      break;
+    }
+  }
+
+  if (exists) {
+    if (update) {
+      return saveXmlAndProfile(document, podcastInfo, profile, url, update);
+    } else {
+      developer.log('RSS feed is already saved.');
+      return true;
+    }
+  } else {
+    return saveXmlAndProfile(document, podcastInfo, profile, url, update);
+  }
+}
+
+bool saveXmlAndProfile(XmlDocument document, PodcastInfo podcastInfo, Profile profile, String url, bool update) {
+  Globals? globals = Globals.getGlobals();
+  if (globals == null) {
+    developer.log('Failed to get global variables.');
+    return false;
+  }
+
+  File wFile = File('${globals.podcastPath}/${podcastInfo.title}.xml');
+  try {
+    wFile.writeAsStringSync(document.toString());
+  } on FileSystemException {
+    developer.log('Failed to save XML file.');
+    return false;
+  }
+
+  if (!update) {
+    profile.podcasts.add(PodcastOverview(title: podcastInfo.title, url: url));
+
+    File profileWFile = File('${globals.nojcastsPath}/profile.json');
+    try {
+      profileWFile.writeAsStringSync(jsonEncode(Profile(podcasts: profile.podcasts).toJson()));
+    } on FileSystemException {
+      developer.log('Failed to save profile.');
+      return false;
+    }
+  }
+
+  return true;
 }
 
 XmlDocument? parseXmlString(String contents) {
@@ -157,7 +223,7 @@ void savePodcastImage(XmlElement image, String title) async {
   wFile.writeAsBytesSync(response.bodyBytes);
 }
 
-PodcastInfo? getPodcastInfo(XmlDocument document, bool getItems) {
+PodcastInfo? getPodcastInfo(XmlDocument document, bool saveImage, bool getItems) {
   Iterable<XmlElement> channelIter = document.findAllElements('channel');
   if (channelIter.isEmpty) {
     developer.log('Invalid XML from RSS feed.');
@@ -175,6 +241,12 @@ PodcastInfo? getPodcastInfo(XmlDocument document, bool getItems) {
     return null;
   }
 
+  XmlElement? image = findAndCheckForElement(channel, 'itunes:image');
+  if (null == image) {
+    return null;
+  }
+  savePodcastImage(image, title.innerText);
+
   if (getItems) {
     List<XmlElement> itemIter = channel.findElements('item').toList();
 
@@ -190,12 +262,6 @@ PodcastInfo? getPodcastInfo(XmlDocument document, bool getItems) {
     return PodcastInfo(title.innerText, hosts.innerText, podcastItemList);
   }
 
-  XmlElement? image = findAndCheckForElement(channel, 'itunes:image');
-  if (null == image) {
-    return null;
-  }
-  savePodcastImage(image, title.innerText);
-
   return PodcastInfo(title.innerText, hosts.innerText, []);
 }
 
@@ -205,5 +271,5 @@ Future<PodcastInfo?> getPodcastInfoFromFile(String title) async {
     return null;
   }
 
-  return getPodcastInfo(document, true);
+  return getPodcastInfo(document, false, true);
 }

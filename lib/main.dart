@@ -69,7 +69,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     }
 
     Directory nojcastsDir = Directory(globals.nojcastsPath);
-    if (nojcastsDir.existsSync()) {
+    if (!nojcastsDir.existsSync()) {
       Directory podDir = Directory(globals.podcastPath);
       podDir.createSync(recursive: true);
       Directory imgDir = Directory(globals.imagePath);
