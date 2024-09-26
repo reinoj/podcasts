@@ -1,14 +1,16 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:nojcasts/bottom_sheet_player.dart';
 import 'package:xml/xml.dart';
 
 import 'podcast.dart';
 
 class PodcastPage extends StatefulWidget {
-  const PodcastPage({super.key, required this.initialPodcastInfo, required this.rssUrl});
+  const PodcastPage({super.key, required this.initialPodcastInfo, required this.rssUrl, required this.player});
 
   final PodcastInfo initialPodcastInfo;
   final String rssUrl;
+  final AudioPlayer player;
 
   @override
   State<PodcastPage> createState() => _PodcastPageState();
@@ -16,10 +18,18 @@ class PodcastPage extends StatefulWidget {
 
 class _PodcastPageState extends State<PodcastPage> {
   late PodcastInfo _podcastInfo;
+  late bool _showPlayer;
+
+  void updateShowPlayer() {
+    setState(() {
+      _showPlayer = showBottomSheetPlayer(widget.player.state);
+    });
+  }
 
   @override
   void initState() {
     _podcastInfo = widget.initialPodcastInfo;
+    updateShowPlayer();
     super.initState();
   }
 
@@ -65,43 +75,44 @@ class _PodcastPageState extends State<PodcastPage> {
         centerTitle: true,
         title: Text(_podcastInfo.title),
       ),
-      body: ListView.separated(
-        itemBuilder: (BuildContext ctx, int index) {
-          return EpisodeTile(podcastItem: _podcastInfo.items.elementAt(index));
-        },
-        separatorBuilder: (BuildContext ctx, int index) {
-          return const SizedBox(height: 8.0);
-        },
-        itemCount: _podcastInfo.items.length,
-        padding: const EdgeInsets.all(8.0),
+      body: Padding(
+        padding: showBottomSheetPlayer(widget.player.state)
+            ? const EdgeInsets.only(bottom: bottomSheetHeight)
+            : const EdgeInsets.only(bottom: 0.0),
+        child: ListView.separated(
+          itemBuilder: (BuildContext ctx, int index) {
+            return EpisodeTile(
+              podcastItem: _podcastInfo.items.elementAt(index),
+              player: widget.player,
+              updateShowPlayer: updateShowPlayer,
+            );
+          },
+          separatorBuilder: (BuildContext ctx, int index) {
+            return const SizedBox(height: 8.0);
+          },
+          itemCount: _podcastInfo.items.length,
+          padding: const EdgeInsets.all(8.0),
+        ),
       ),
+      bottomSheet: _showPlayer ? BottomSheetPlayer(player: widget.player) : null,
     );
   }
 }
 
-class EpisodeTile extends StatefulWidget {
-  const EpisodeTile({super.key, required this.podcastItem});
+class EpisodeTile extends StatelessWidget {
+  const EpisodeTile({super.key, required this.podcastItem, required this.player, required this.updateShowPlayer});
 
   final PodcastItem podcastItem;
-
-  @override
-  State<EpisodeTile> createState() => _EpisodeTileState();
-}
-
-class _EpisodeTileState extends State<EpisodeTile> {
-  final AudioPlayer _player = AudioPlayer();
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
+  final AudioPlayer player;
+  final Function() updateShowPlayer;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        await _player.play(UrlSource(widget.podcastItem.mp3Url));
+        await player.setSource(UrlSource(podcastItem.mp3Url));
+        await player.resume();
+        updateShowPlayer();
       },
       child: Container(
         decoration: BoxDecoration(
@@ -114,7 +125,7 @@ class _EpisodeTileState extends State<EpisodeTile> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.podcastItem.title,
+              podcastItem.title,
               style: const TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
@@ -122,17 +133,17 @@ class _EpisodeTileState extends State<EpisodeTile> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  widget.podcastItem.pubDate,
+                  podcastItem.pubDate,
                   style: const TextStyle(fontSize: 16.0, fontStyle: FontStyle.italic),
                 ),
                 Text(
-                  '${widget.podcastItem.duration_min} min',
+                  '${podcastItem.duration_min} min',
                   style: const TextStyle(fontSize: 14.0, fontStyle: FontStyle.italic),
                 )
               ],
             ),
             Text(
-              widget.podcastItem.description,
+              podcastItem.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 14.0, color: Theme.of(context).colorScheme.onPrimary),

@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:nojcasts/bottom_sheet_player.dart';
 
 import 'add_page.dart';
-import 'home_page.dart';
+import 'main_page.dart';
 import 'globals.dart';
 import 'podcast_overview.dart';
 import 'profile.dart';
@@ -24,7 +26,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.dark(
           surface: Colors.grey.shade900,
-          onSurface: Colors.grey.shade200,
+          onSurface: Colors.grey.shade100,
           primary: Colors.blueGrey.shade600,
           onPrimary: Colors.grey.shade400,
           inversePrimary: Colors.grey.shade800,
@@ -48,10 +50,8 @@ class MainScaffold extends StatefulWidget {
 
 class _MainScaffoldState extends State<MainScaffold> {
   int _currentBottomIndex = 0;
-  final List<Widget> _navigationOptions = [
-    const HomePage(),
-    const AddPage(),
-  ];
+  final AudioPlayer _player = AudioPlayer();
+  late List<Widget> _navigationOptions;
   Profile? _profile;
 
   void updateProfile(Profile newProfile, File wFile) {
@@ -88,6 +88,10 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   void initState() {
     initFolderAndProfile();
+    _navigationOptions = [
+      MainPage(player: _player),
+      const AddPage(),
+    ];
 
     super.initState();
   }
@@ -100,7 +104,12 @@ class _MainScaffoldState extends State<MainScaffold> {
         centerTitle: true,
         title: Text(widget.title),
       ),
-      body: _navigationOptions[_currentBottomIndex],
+      body: Padding(
+        padding: showBottomSheetPlayer(_player.state)
+            ? const EdgeInsets.only(bottom: bottomSheetHeight)
+            : const EdgeInsets.only(bottom: 0.0),
+        child: _navigationOptions[_currentBottomIndex],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (int newIndex) {
           setState(() {
@@ -119,6 +128,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           ),
         ],
       ),
+      bottomSheet: showBottomSheetPlayer(_player.state) ? BottomSheetPlayer(player: _player) : null,
     );
   }
 }

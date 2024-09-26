@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
 import 'globals.dart';
@@ -8,14 +9,16 @@ import 'podcast_overview.dart';
 import 'podcast_page.dart';
 import 'profile.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class MainPage extends StatefulWidget {
+  const MainPage({super.key, required this.player});
+
+  final AudioPlayer player;
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<MainPage> createState() => _MainPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _MainPageState extends State<MainPage> {
   List<PodcastOverview> _allPodcasts = [];
   bool _loaded = false;
 
@@ -44,6 +47,7 @@ class _HomePageState extends State<HomePage> {
           return PodcastTile(
             podcastOverview: _allPodcasts.elementAt(index),
             loadProfile: loadProfile,
+            player: widget.player,
           );
         },
         separatorBuilder: (BuildContext ctx, int index) {
@@ -61,9 +65,10 @@ class _HomePageState extends State<HomePage> {
 }
 
 class PodcastTile extends StatefulWidget {
-  const PodcastTile({super.key, required this.podcastOverview, required this.loadProfile});
+  const PodcastTile({super.key, required this.podcastOverview, required this.loadProfile, required this.player});
   final PodcastOverview podcastOverview;
   final Function() loadProfile;
+  final AudioPlayer player;
 
   @override
   State<PodcastTile> createState() => _PodcastTileState();
@@ -116,6 +121,7 @@ class _PodcastTileState extends State<PodcastTile> {
               builder: (context) => PodcastPage(
                 initialPodcastInfo: podcastInfo,
                 rssUrl: widget.podcastOverview.url,
+                player: widget.player,
               ),
             ),
           );
@@ -137,7 +143,7 @@ class _PodcastTileState extends State<PodcastTile> {
             const SizedBox(width: 8.0),
             Text(
               widget.podcastOverview.title,
-              style: TextStyle(fontSize: 24.0, color: Theme.of(context).colorScheme.onPrimary),
+              style: TextStyle(fontSize: 24.0, color: Theme.of(context).colorScheme.onSurface),
             ),
           ],
         ),
