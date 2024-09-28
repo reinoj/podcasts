@@ -4,13 +4,13 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/bottom_sheet_player.dart';
 
-import 'add_page.dart';
-import 'main_page.dart';
-import 'globals.dart';
-import 'podcast_overview.dart';
-import 'profile.dart';
+import 'package:nojcasts/add_page.dart';
+import 'package:nojcasts/bottom_sheet_player.dart';
+import 'package:nojcasts/globals.dart';
+import 'package:nojcasts/main_page.dart';
+import 'package:nojcasts/podcast_overview.dart';
+import 'package:nojcasts/profile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +31,8 @@ class MyApp extends StatelessWidget {
           onPrimary: Colors.grey.shade400,
           inversePrimary: Colors.grey.shade800,
           outline: Colors.blueGrey.shade200,
+          secondary: const Color.fromARGB(255, 70, 50, 100),
+          onSecondary: const Color.fromARGB(255, 225, 150, 75),
         ),
         useMaterial3: true,
       ),
@@ -40,9 +42,9 @@ class MyApp extends StatelessWidget {
 }
 
 class MainScaffold extends StatefulWidget {
-  const MainScaffold({super.key, required this.title});
-
   final String title;
+
+  const MainScaffold({super.key, required this.title});
 
   @override
   State<MainScaffold> createState() => _MainScaffoldState();
@@ -100,7 +102,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         centerTitle: true,
         title: Text(widget.title),
       ),

@@ -1,7 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:nojcasts/components/slider_bar.dart';
 
-const double bottomSheetHeight = 50.0;
+const double bottomSheetHeight = 120.0;
 
 class BottomSheetPlayer extends StatefulWidget {
   const BottomSheetPlayer({super.key, required this.player});
@@ -42,26 +43,34 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.primary,
+      color: Theme.of(context).colorScheme.secondary,
       height: bottomSheetHeight,
       width: MediaQuery.of(context).size.width,
-      child: Row(
+      child: Column(
         children: [
-          IconButton(
-            onPressed: () {
-              if (widget.player.state == PlayerState.playing) {
-                widget.player.pause();
-                setState(() {
-                  _playPauseState = 0;
-                });
-              } else if (widget.player.state == PlayerState.paused) {
-                widget.player.resume();
-                setState(() {
-                  _playPauseState = 1;
-                });
-              }
-            },
-            icon: _playPauseButton[_playPauseState],
+          SliderBar(player: widget.player),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                highlightColor: Theme.of(context).colorScheme.onSecondary,
+                hoverColor: Theme.of(context).colorScheme.onSecondary,
+                onPressed: () {
+                  if (widget.player.state == PlayerState.playing) {
+                    widget.player.pause();
+                    setState(() {
+                      _playPauseState = 0;
+                    });
+                  } else if (widget.player.state == PlayerState.paused) {
+                    widget.player.resume();
+                    setState(() {
+                      _playPauseState = 1;
+                    });
+                  }
+                },
+                icon: _playPauseButton[_playPauseState],
+              ),
+            ],
           ),
         ],
       ),

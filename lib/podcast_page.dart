@@ -19,12 +19,17 @@ class PodcastPage extends StatefulWidget {
 class _PodcastPageState extends State<PodcastPage> {
   late PodcastInfo _podcastInfo;
   late bool _showPlayer;
+  // int _currentIndex = -1;
 
   void updateShowPlayer() {
     setState(() {
       _showPlayer = showBottomSheetPlayer(widget.player.state);
     });
   }
+
+  // void updateIndex(int newIndex) {
+  //   _currentIndex = newIndex;
+  // }
 
   @override
   void initState() {
@@ -71,7 +76,7 @@ class _PodcastPageState extends State<PodcastPage> {
             icon: const Icon(Icons.update),
           ),
         ],
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         centerTitle: true,
         title: Text(_podcastInfo.title),
       ),
@@ -84,7 +89,9 @@ class _PodcastPageState extends State<PodcastPage> {
             return EpisodeTile(
               podcastItem: _podcastInfo.items.elementAt(index),
               player: widget.player,
+              index: index,
               updateShowPlayer: updateShowPlayer,
+              // updateIndex: updateIndex,
             );
           },
           separatorBuilder: (BuildContext ctx, int index) {
@@ -100,11 +107,20 @@ class _PodcastPageState extends State<PodcastPage> {
 }
 
 class EpisodeTile extends StatelessWidget {
-  const EpisodeTile({super.key, required this.podcastItem, required this.player, required this.updateShowPlayer});
+  const EpisodeTile({
+    super.key,
+    required this.podcastItem,
+    required this.player,
+    required this.index,
+    required this.updateShowPlayer,
+    // required this.updateIndex,
+  });
 
   final PodcastItem podcastItem;
   final AudioPlayer player;
+  final int index;
   final Function() updateShowPlayer;
+  // final Function(int) updateIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +129,7 @@ class EpisodeTile extends StatelessWidget {
         await player.setSource(UrlSource(podcastItem.mp3Url));
         await player.resume();
         updateShowPlayer();
+        // updateIndex(index);
       },
       child: Container(
         decoration: BoxDecoration(
