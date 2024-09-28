@@ -85,7 +85,7 @@ class _SliderBarState extends State<SliderBar> {
   @override
   Widget build(BuildContext context) {
     return Slider(
-      activeColor: Theme.of(context).colorScheme.onSecondary,
+      activeColor: Theme.of(context).colorScheme.secondary,
       value: (_position != null && _duration != null && _position!.inMilliseconds > 0 && _duration!.inMilliseconds > 0)
           ? _position!.inMilliseconds / _duration!.inMilliseconds
           : 0.0,

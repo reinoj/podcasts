@@ -43,7 +43,7 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.secondary,
+      color: Theme.of(context).colorScheme.onSecondary,
       height: bottomSheetHeight,
       width: MediaQuery.of(context).size.width,
       child: Column(
@@ -53,8 +53,8 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                highlightColor: Theme.of(context).colorScheme.onSecondary,
-                hoverColor: Theme.of(context).colorScheme.onSecondary,
+                highlightColor: Theme.of(context).colorScheme.secondary,
+                hoverColor: Theme.of(context).colorScheme.secondary,
                 onPressed: () {
                   if (widget.player.state == PlayerState.playing) {
                     widget.player.pause();

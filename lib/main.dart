@@ -31,8 +31,10 @@ class MyApp extends StatelessWidget {
           onPrimary: Colors.grey.shade400,
           inversePrimary: Colors.grey.shade800,
           outline: Colors.blueGrey.shade200,
-          secondary: const Color.fromARGB(255, 70, 50, 100),
-          onSecondary: const Color.fromARGB(255, 225, 150, 75),
+          onSecondary: const Color.fromARGB(255, 70, 50, 100),
+          secondary: const Color.fromARGB(255, 225, 150, 75),
+          // secondary: const Color.fromARGB(255, 70, 50, 100),
+          // onSecondary: const Color.fromARGB(255, 225, 150, 75),
         ),
         useMaterial3: true,
       ),
@@ -102,7 +104,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.secondary,
+        backgroundColor: Theme.of(context).colorScheme.onSecondary,
         centerTitle: true,
         title: Text(widget.title),
       ),

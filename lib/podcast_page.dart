@@ -76,7 +76,7 @@ class _PodcastPageState extends State<PodcastPage> {
             icon: const Icon(Icons.update),
           ),
         ],
-        backgroundColor: Theme.of(context).colorScheme.secondary,
+        backgroundColor: Theme.of(context).colorScheme.onSecondary,
         centerTitle: true,
         title: Text(_podcastInfo.title),
       ),

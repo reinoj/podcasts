@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/main_page.dart';
 import 'package:nojcasts/podcast_overview.dart';
 
 import 'package:nojcasts/podcast_page.dart';
