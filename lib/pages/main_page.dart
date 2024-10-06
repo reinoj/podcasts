@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 import 'package:nojcasts/components/podcast_tile.dart';
-import 'package:nojcasts/podcast_overview.dart';
-import 'package:nojcasts/profile.dart';
+import 'package:nojcasts/components/podcast_overview.dart';
+import 'package:nojcasts/components/profile.dart';
 
 class MainPage extends StatefulWidget {
   final AudioPlayer player;

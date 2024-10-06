@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'podcast.dart';
+import '../components/podcast.dart';
 
 class AddPage extends StatefulWidget {
   const AddPage({super.key});

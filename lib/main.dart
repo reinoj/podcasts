@@ -5,12 +5,12 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
-import 'package:nojcasts/add_page.dart';
-import 'package:nojcasts/bottom_sheet_player.dart';
+import 'package:nojcasts/pages/add_page.dart';
+import 'package:nojcasts/components/bottom_sheet_player.dart';
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/main_page.dart';
-import 'package:nojcasts/podcast_overview.dart';
-import 'package:nojcasts/profile.dart';
+import 'package:nojcasts/pages/main_page.dart';
+import 'package:nojcasts/components/podcast_overview.dart';
+import 'package:nojcasts/components/profile.dart';
 
 void main() {
   runApp(const MyApp());

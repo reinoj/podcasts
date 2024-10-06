@@ -9,8 +9,8 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/podcast_overview.dart';
-import 'package:nojcasts/profile.dart';
+import 'package:nojcasts/components/podcast_overview.dart';
+import 'package:nojcasts/components/profile.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
 

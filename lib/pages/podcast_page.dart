@@ -1,9 +1,9 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/bottom_sheet_player.dart';
+import 'package:nojcasts/components/bottom_sheet_player.dart';
 import 'package:xml/xml.dart';
 
-import 'podcast.dart';
+import '../components/podcast.dart';
 
 class PodcastPage extends StatefulWidget {
   const PodcastPage({super.key, required this.initialPodcastInfo, required this.rssUrl, required this.player});

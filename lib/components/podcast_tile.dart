@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/podcast_overview.dart';
+import 'package:nojcasts/components/podcast_overview.dart';
 
-import 'package:nojcasts/podcast_page.dart';
+import 'package:nojcasts/pages/podcast_page.dart';
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/podcast.dart';
+import 'package:nojcasts/components/podcast.dart';
 
 class PodcastTile extends StatefulWidget {
   final PodcastOverview podcastOverview;
