@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/components/podcast_overview.dart';
+import 'package:nojcasts/data/podcast_overview.dart';
 
 import 'package:nojcasts/pages/podcast_page.dart';
 import 'package:nojcasts/globals.dart';
@@ -88,7 +88,9 @@ class _PodcastTileState extends State<PodcastTile> {
             const SizedBox(width: 8.0),
             Text(
               widget.podcastOverview.title,
-              style: TextStyle(fontSize: 24.0, color: Theme.of(context).colorScheme.onSurface),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 20.0, color: Theme.of(context).colorScheme.onSurface),
             ),
           ],
         ),

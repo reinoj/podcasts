@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:nojcasts/components/podcast_overview.dart';
+import 'package:nojcasts/data/podcast_overview.dart';
 
 part 'profile.g.dart';
 

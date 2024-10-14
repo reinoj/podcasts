@@ -9,8 +9,8 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/components/podcast_overview.dart';
-import 'package:nojcasts/components/profile.dart';
+import 'package:nojcasts/data/podcast_overview.dart';
+import 'package:nojcasts/data/profile.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
 
@@ -142,53 +142,38 @@ XmlElement? findAndCheckForElement(XmlElement root, String elementName) {
 
 PodcastItem? getPodcastItem(XmlElement element) {
   XmlElement? xmlTitle = findAndCheckForElement(element, 'title');
-  if (xmlTitle == null) {
-    return null;
-  }
-  String title = xmlTitle.innerText;
+  String title = xmlTitle?.innerText ?? '';
 
+  String description = '';
   XmlElement? xmlDescription = findAndCheckForElement(element, 'description');
-  if (xmlDescription == null) {
-    return null;
-  }
+  if (xmlDescription != null) {
+    // parse the paragraph tag
+    Document p = parse(xmlDescription.innerText);
+    if (p.body == null) {
+      return null;
+    }
 
-  // parse the paragraph tag
-  Document p = parse(xmlDescription.innerText);
-  if (p.body == null) {
-    return null;
-  }
-
-  String description = p.body!.text;
-  if (description.isEmpty) {
-    XmlElement? xmlSummary = findAndCheckForElement(element, 'itunes:summary');
-    if (xmlSummary != null) {
-      p = parse(xmlSummary.innerText);
-      if (p.body != null) {
-        description = p.body!.text;
+    description = p.body!.text;
+    if (description.isEmpty) {
+      XmlElement? xmlSummary = findAndCheckForElement(element, 'itunes:summary');
+      if (xmlSummary != null) {
+        p = parse(xmlSummary.innerText);
+        if (p.body != null) {
+          description = p.body!.text;
+        }
       }
     }
   }
 
-  int i = description.lastIndexOf('Timestamps');
-  if (i != -1) {
-    description = description.substring(0, i);
-  }
-
   XmlElement? pubDate = findAndCheckForElement(element, 'pubDate');
-  if (pubDate == null) {
-    return null;
-  }
   // just keep the day and date
-  String shortenedDate = pubDate.innerText.substring(0, 16);
+  String shortenedDate = pubDate?.innerText.substring(0, 16) ?? '';
 
+  // TODO: handle other duration formats sometime
   XmlElement? xmlDuration = findAndCheckForElement(element, 'itunes:duration');
-  if (xmlDuration == null) {
-    return null;
-  }
-  int? duration_s = int.tryParse(xmlDuration.innerText);
-  if (duration_s == null) {
-    return null;
-  }
+  String textDuration = xmlDuration?.innerText ?? '0';
+  int? duration_s = int.tryParse(textDuration);
+  duration_s ??= 0;
   int duration_min = (duration_s / 60).floor();
 
   XmlElement? enclosure = findAndCheckForElement(element, 'enclosure');
@@ -241,11 +226,13 @@ PodcastInfo? getPodcastInfo(XmlDocument document, bool saveImage, bool getItems)
     return null;
   }
 
-  XmlElement? image = findAndCheckForElement(channel, 'itunes:image');
-  if (null == image) {
-    return null;
+  if (saveImage) {
+    XmlElement? image = findAndCheckForElement(channel, 'itunes:image');
+    if (null == image) {
+      return null;
+    }
+    savePodcastImage(image, title.innerText);
   }
-  savePodcastImage(image, title.innerText);
 
   if (getItems) {
     List<XmlElement> itemIter = channel.findElements('item').toList();

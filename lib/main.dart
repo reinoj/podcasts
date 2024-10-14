@@ -9,8 +9,8 @@ import 'package:nojcasts/pages/add_page.dart';
 import 'package:nojcasts/components/bottom_sheet_player.dart';
 import 'package:nojcasts/globals.dart';
 import 'package:nojcasts/pages/main_page.dart';
-import 'package:nojcasts/components/podcast_overview.dart';
-import 'package:nojcasts/components/profile.dart';
+import 'package:nojcasts/data/podcast_overview.dart';
+import 'package:nojcasts/data/profile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -53,9 +53,10 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  int _currentBottomIndex = 0;
+  int _currentPageIndex = 0;
+  late List<Widget> _pageOptions;
+  bool _showNavBar = true;
   final AudioPlayer _player = AudioPlayer();
-  late List<Widget> _navigationOptions;
   Profile? _profile;
 
   void updateProfile(Profile newProfile, File wFile) {
@@ -92,12 +93,41 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   void initState() {
     initFolderAndProfile();
-    _navigationOptions = [
+    _pageOptions = [
       MainPage(player: _player),
       const AddPage(),
     ];
 
     super.initState();
+  }
+
+  // Callbacks
+  void updateShowNavBar(bool val) {
+    setState(() {
+      _showNavBar = val;
+    });
+  }
+  //
+
+  BottomNavigationBar bottomNavigationBar() {
+    return BottomNavigationBar(
+      onTap: (int newIndex) {
+        setState(() {
+          _currentPageIndex = newIndex;
+        });
+      },
+      currentIndex: _currentPageIndex,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.add),
+          label: 'Add',
+        ),
+      ],
+    );
   }
 
   @override
@@ -112,26 +142,9 @@ class _MainScaffoldState extends State<MainScaffold> {
         padding: showBottomSheetPlayer(_player.state)
             ? const EdgeInsets.only(bottom: bottomSheetHeight)
             : const EdgeInsets.only(bottom: 0.0),
-        child: _navigationOptions[_currentBottomIndex],
+        child: _pageOptions[_currentPageIndex],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: (int newIndex) {
-          setState(() {
-            _currentBottomIndex = newIndex;
-          });
-        },
-        currentIndex: _currentBottomIndex,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Add',
-          ),
-        ],
-      ),
+      bottomNavigationBar: _showNavBar ? bottomNavigationBar() : null,
       bottomSheet: showBottomSheetPlayer(_player.state) ? BottomSheetPlayer(player: _player) : null,
     );
   }
