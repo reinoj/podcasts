@@ -1,22 +1,20 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/components/podcast.dart';
+import 'package:nojcasts/types/podcast_item.dart';
 
 class EpisodeTile extends StatelessWidget {
+  final PodcastItem podcastItem;
+  final AudioPlayer player;
+  final int index;
+  final Function() updateShowPlayer;
+
   const EpisodeTile({
     super.key,
     required this.podcastItem,
     required this.player,
     required this.index,
     required this.updateShowPlayer,
-    // required this.updateIndex,
   });
-
-  final PodcastItem podcastItem;
-  final AudioPlayer player;
-  final int index;
-  final Function() updateShowPlayer;
-  // final Function(int) updateIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +23,6 @@ class EpisodeTile extends StatelessWidget {
         await player.setSource(UrlSource(podcastItem.mp3Url));
         await player.resume();
         updateShowPlayer();
-        // updateIndex(index);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -50,7 +47,7 @@ class EpisodeTile extends StatelessWidget {
                   style: const TextStyle(fontSize: 16.0, fontStyle: FontStyle.italic),
                 ),
                 Text(
-                  '${podcastItem.duration_min} min',
+                  '${podcastItem.durationMin} min',
                   style: const TextStyle(fontSize: 14.0, fontStyle: FontStyle.italic),
                 )
               ],

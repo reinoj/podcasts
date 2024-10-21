@@ -1,17 +1,24 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+
 import 'package:nojcasts/components/bottom_sheet_player.dart';
 import 'package:nojcasts/components/episode_tile.dart';
-import 'package:xml/xml.dart';
-
-import '../components/podcast.dart';
+import 'package:nojcasts/db/rss_xml.dart';
+import 'package:nojcasts/types/podcast_info.dart';
 
 class PodcastPage extends StatefulWidget {
-  const PodcastPage({super.key, required this.initialPodcastInfo, required this.rssUrl, required this.player});
-
+  final String title;
   final PodcastInfo initialPodcastInfo;
   final String rssUrl;
   final AudioPlayer player;
+
+  const PodcastPage({
+    super.key,
+    required this.title,
+    required this.initialPodcastInfo,
+    required this.rssUrl,
+    required this.player,
+  });
 
   @override
   State<PodcastPage> createState() => _PodcastPageState();
@@ -20,17 +27,12 @@ class PodcastPage extends StatefulWidget {
 class _PodcastPageState extends State<PodcastPage> {
   late PodcastInfo _podcastInfo;
   late bool _showPlayer;
-  // int _currentIndex = -1;
 
   void updateShowPlayer() {
     setState(() {
       _showPlayer = showBottomSheetPlayer(widget.player.state);
     });
   }
-
-  // void updateIndex(int newIndex) {
-  //   _currentIndex = newIndex;
-  // }
 
   @override
   void initState() {
@@ -46,13 +48,15 @@ class _PodcastPageState extends State<PodcastPage> {
         actions: [
           IconButton(
             onPressed: () async {
-              bool succeeded = await downloadRss(widget.rssUrl, true);
-              XmlDocument? document = await getXmlDocumentFromFile(_podcastInfo.title);
-              if (document == null) {
-                return;
-              }
+              // bool succeeded = await downloadRss(widget.rssUrl, true);
+              bool succeeded = await trySaveRss(widget.rssUrl, true);
+              // XmlDocument? document = await getXmlDocumentFromFile(widget.title);
+              // if (document == null) {
+              //   return;
+              // }
 
-              PodcastInfo? pI = getPodcastInfo(document, true, true);
+              // PodcastInfo? pI = getPodcastInfo(document, true, true);
+              PodcastInfo? pI = getPodcastInfoFromJson(widget.title);
               if (pI == null) {
                 return;
               }
@@ -79,7 +83,7 @@ class _PodcastPageState extends State<PodcastPage> {
         ],
         backgroundColor: Theme.of(context).colorScheme.onSecondary,
         centerTitle: true,
-        title: Text(_podcastInfo.title),
+        title: Text(widget.title),
       ),
       body: Padding(
         padding: showBottomSheetPlayer(widget.player.state)
@@ -92,7 +96,6 @@ class _PodcastPageState extends State<PodcastPage> {
               player: widget.player,
               index: index,
               updateShowPlayer: updateShowPlayer,
-              // updateIndex: updateIndex,
             );
           },
           separatorBuilder: (BuildContext ctx, int index) {

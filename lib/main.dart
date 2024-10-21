@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'dart:developer' as developer;
+import 'dart:developer' show log;
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -9,8 +8,7 @@ import 'package:nojcasts/pages/add_page.dart';
 import 'package:nojcasts/components/bottom_sheet_player.dart';
 import 'package:nojcasts/globals.dart';
 import 'package:nojcasts/pages/main_page.dart';
-import 'package:nojcasts/data/podcast_overview.dart';
-import 'package:nojcasts/data/profile.dart';
+import 'package:nojcasts/db/podcast_db.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,10 +29,8 @@ class MyApp extends StatelessWidget {
           onPrimary: Colors.grey.shade400,
           inversePrimary: Colors.grey.shade800,
           outline: Colors.blueGrey.shade200,
-          onSecondary: const Color.fromARGB(255, 70, 50, 100),
           secondary: const Color.fromARGB(255, 225, 150, 75),
-          // secondary: const Color.fromARGB(255, 70, 50, 100),
-          // onSecondary: const Color.fromARGB(255, 225, 150, 75),
+          onSecondary: const Color.fromARGB(255, 70, 50, 100),
         ),
         useMaterial3: true,
       ),
@@ -53,17 +49,17 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
+  final AudioPlayer _player = AudioPlayer();
+  bool _showNavBar = true;
+  PodcastDb? _podcastDb;
+
   int _currentPageIndex = 0;
   late List<Widget> _pageOptions;
-  bool _showNavBar = true;
-  final AudioPlayer _player = AudioPlayer();
-  Profile? _profile;
 
-  void updateProfile(Profile newProfile, File wFile) {
+  void updateShowNavBar(bool val) {
     setState(() {
-      _profile = newProfile;
+      _showNavBar = val;
     });
-    wFile.writeAsStringSync(jsonEncode(_profile!.toJson()));
   }
 
   void initFolderAndProfile() async {
@@ -73,20 +69,15 @@ class _MainScaffoldState extends State<MainScaffold> {
       return;
     }
 
+    _podcastDb = await PodcastDb.getInstance();
+
     Directory nojcastsDir = Directory(globals.nojcastsPath);
     if (!nojcastsDir.existsSync()) {
       Directory podDir = Directory(globals.podcastPath);
       podDir.createSync(recursive: true);
       Directory imgDir = Directory(globals.imagePath);
       imgDir.createSync(recursive: true);
-      developer.log('Created nojcasts, podcasts, and images directories.');
-    }
-
-    File profileFile = File('${globals.nojcastsPath}/profile.json');
-    if (!profileFile.existsSync()) {
-      updateProfile(Profile(podcasts: []), profileFile);
-    } else {
-      _profile = Profile.fromJson(await getProfile());
+      log('Created nojcasts, podcasts, and images directories.');
     }
   }
 
@@ -94,20 +85,21 @@ class _MainScaffoldState extends State<MainScaffold> {
   void initState() {
     initFolderAndProfile();
     _pageOptions = [
-      MainPage(player: _player),
+      MainPage(player: _player, updateShowNavBar: updateShowNavBar),
       const AddPage(),
     ];
 
     super.initState();
   }
 
-  // Callbacks
-  void updateShowNavBar(bool val) {
-    setState(() {
-      _showNavBar = val;
-    });
+  @override
+  Future<void> dispose() async {
+    super.dispose();
+
+    if (_podcastDb != null) {
+      await _podcastDb?.closeDb();
+    }
   }
-  //
 
   BottomNavigationBar bottomNavigationBar() {
     return BottomNavigationBar(

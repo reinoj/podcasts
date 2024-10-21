@@ -2,34 +2,41 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/data/podcast_overview.dart';
+import 'package:nojcasts/db/podcast_db_entry.dart';
+import 'package:nojcasts/types/podcast_info.dart';
 
 import 'package:nojcasts/pages/podcast_page.dart';
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/components/podcast.dart';
+import 'package:nojcasts/db/rss_xml.dart';
 
 class PodcastTile extends StatefulWidget {
-  final PodcastOverview podcastOverview;
-  final Function() loadProfile;
   final AudioPlayer player;
+  final PodcastDbEntry podcastDbEntry;
+  final Function() loadPodcasts;
+  final Function(bool) updateShowNavBar;
 
-  const PodcastTile({super.key, required this.podcastOverview, required this.loadProfile, required this.player});
+  const PodcastTile({
+    super.key,
+    required this.player,
+    required this.podcastDbEntry,
+    required this.loadPodcasts,
+    required this.updateShowNavBar,
+  });
 
   @override
   State<PodcastTile> createState() => _PodcastTileState();
 }
 
 class _PodcastTileState extends State<PodcastTile> {
-  // late File _img;
   late Image _img;
 
   void loadImg() {
     imageCache.clear();
     Globals? globals = Globals.getGlobals();
     if (globals != null) {
-      File img = File('${globals.imagePath}/${widget.podcastOverview.title}.jpg');
+      File img = File('${globals.imagePath}/${widget.podcastDbEntry.title}.jpg');
       if (!img.existsSync()) {
-        img = File('${globals.imagePath}/${widget.podcastOverview.title}.png');
+        img = File('${globals.imagePath}/${widget.podcastDbEntry.title}.png');
       }
       setState(() {
         _img = Image.file(
@@ -52,7 +59,7 @@ class _PodcastTileState extends State<PodcastTile> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        PodcastInfo? podcastInfo = await getPodcastInfoFromFile(widget.podcastOverview.title);
+        PodcastInfo? podcastInfo = getPodcastInfoFromJson(widget.podcastDbEntry.title);
         if (context.mounted) {
           if (podcastInfo == null) {
             SnackBar snackBar = const SnackBar(content: Text('Unable to serialize RSS feed.'));
@@ -60,17 +67,20 @@ class _PodcastTileState extends State<PodcastTile> {
             return;
           }
 
+          widget.updateShowNavBar(false);
           await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => PodcastPage(
+                title: widget.podcastDbEntry.title,
                 initialPodcastInfo: podcastInfo,
-                rssUrl: widget.podcastOverview.url,
+                rssUrl: widget.podcastDbEntry.rssUrl,
                 player: widget.player,
               ),
             ),
           );
-          widget.loadProfile();
+          widget.updateShowNavBar(true);
+          widget.loadPodcasts();
           loadImg();
         }
       },
@@ -87,7 +97,7 @@ class _PodcastTileState extends State<PodcastTile> {
             _img,
             const SizedBox(width: 8.0),
             Text(
-              widget.podcastOverview.title,
+              widget.podcastDbEntry.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 20.0, color: Theme.of(context).colorScheme.onSurface),

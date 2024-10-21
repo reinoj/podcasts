@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../components/podcast.dart';
+import '../db/rss_xml.dart';
 
 class AddPage extends StatefulWidget {
   const AddPage({super.key});
@@ -19,7 +19,8 @@ class _AddPageState extends State<AddPage> {
   }
 
   void getNewRSS(BuildContext context) async {
-    bool succeeded = await downloadRss(_addController.text, false);
+    // bool succeeded = await downloadRss(_addController.text, false);
+    bool succeeded = await trySaveRss(_addController.text, false);
     if (succeeded) {
       SnackBar snackBar = const SnackBar(content: Text('Successfully added RSS feed.'));
       if (context.mounted) {
