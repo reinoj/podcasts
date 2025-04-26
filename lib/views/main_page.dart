@@ -3,26 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 import 'package:nojcasts/components/podcast_tile.dart';
-import 'package:nojcasts/db/podcast_db.dart';
-import 'package:nojcasts/db/podcast_db_entry.dart';
+import 'package:nojcasts/models/podcast_entry.dart';
+import 'package:nojcasts/view_models/podcast_viewmodel.dart';
 
 class MainPage extends StatefulWidget {
   final AudioPlayer player;
   final Function(bool) updateShowNavBar;
+  final PodcastViewmodel viewModel;
 
-  const MainPage({super.key, required this.player, required this.updateShowNavBar});
+  const MainPage({super.key, required this.player, required this.updateShowNavBar, required this.viewModel});
 
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  List<PodcastDbEntry> _allPodcasts = [];
+  late List<PodcastEntry> _allPodcasts;
   bool _loaded = false;
 
   Future<void> loadPodcasts() async {
-    PodcastDb db = await PodcastDb.getInstance();
-    _allPodcasts = await db.getPodcasts();
+    _allPodcasts = widget.viewModel.podcasts;
     setState(() {
       _loaded = true;
     });

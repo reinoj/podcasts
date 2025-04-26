@@ -2,16 +2,16 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/db/podcast_db_entry.dart';
+import 'package:nojcasts/models/podcast_entry.dart';
 import 'package:nojcasts/types/podcast_info.dart';
 
-import 'package:nojcasts/pages/podcast_page.dart';
+import 'package:nojcasts/views/podcast_page.dart';
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/db/rss_xml.dart';
+import 'package:nojcasts/services/rss_xml.dart';
 
 class PodcastTile extends StatefulWidget {
   final AudioPlayer player;
-  final PodcastDbEntry podcastDbEntry;
+  final PodcastEntry podcastDbEntry;
   final Function() loadPodcasts;
   final Function(bool) updateShowNavBar;
 
@@ -28,25 +28,25 @@ class PodcastTile extends StatefulWidget {
 }
 
 class _PodcastTileState extends State<PodcastTile> {
-  late Image _img;
+  Image? _img;
 
-  void loadImg() {
+  Future<void> loadImg() async {
     imageCache.clear();
-    Globals? globals = Globals.getGlobals();
-    if (globals != null) {
-      File img = File('${globals.imagePath}/${widget.podcastDbEntry.title}.jpg');
-      if (!img.existsSync()) {
-        img = File('${globals.imagePath}/${widget.podcastDbEntry.title}.png');
-      }
-      setState(() {
-        _img = Image.file(
-          img,
-          width: 75.0,
-          height: 75.0,
-          fit: BoxFit.fill,
-        );
-      });
+    Globals globals = await GlobalsObj().globals;
+
+    File img = File('${globals.imagePath}/${widget.podcastDbEntry.title}.jpg');
+    if (!img.existsSync()) {
+      img = File('${globals.imagePath}/${widget.podcastDbEntry.title}.png');
     }
+
+    setState(() {
+      _img = Image.file(
+        img,
+        width: 75.0,
+        height: 75.0,
+        fit: BoxFit.fill,
+      );
+    });
   }
 
   @override
@@ -57,9 +57,12 @@ class _PodcastTileState extends State<PodcastTile> {
 
   @override
   Widget build(BuildContext context) {
+    if (_img == null) {
+      return Text('Loading...');
+    }
     return GestureDetector(
       onTap: () async {
-        PodcastInfo? podcastInfo = getPodcastInfoFromJson(widget.podcastDbEntry.title);
+        PodcastInfo? podcastInfo = await getPodcastInfoFromJson(widget.podcastDbEntry.title);
         if (context.mounted) {
           if (podcastInfo == null) {
             SnackBar snackBar = const SnackBar(content: Text('Unable to serialize RSS feed.'));
@@ -94,7 +97,7 @@ class _PodcastTileState extends State<PodcastTile> {
         padding: const EdgeInsets.all(4.0),
         child: Row(
           children: [
-            _img,
+            _img!,
             const SizedBox(width: 8.0),
             Text(
               widget.podcastDbEntry.title,

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:nojcasts/components/bottom_sheet_player.dart';
 import 'package:nojcasts/components/episode_tile.dart';
-import 'package:nojcasts/db/rss_xml.dart';
+import 'package:nojcasts/services/rss_xml.dart';
 import 'package:nojcasts/types/podcast_info.dart';
 
 class PodcastPage extends StatefulWidget {
@@ -48,15 +48,9 @@ class _PodcastPageState extends State<PodcastPage> {
         actions: [
           IconButton(
             onPressed: () async {
-              // bool succeeded = await downloadRss(widget.rssUrl, true);
               bool succeeded = await trySaveRss(widget.rssUrl, true);
-              // XmlDocument? document = await getXmlDocumentFromFile(widget.title);
-              // if (document == null) {
-              //   return;
-              // }
 
-              // PodcastInfo? pI = getPodcastInfo(document, true, true);
-              PodcastInfo? pI = getPodcastInfoFromJson(widget.title);
+              PodcastInfo? pI = await getPodcastInfoFromJson(widget.title);
               if (pI == null) {
                 return;
               }

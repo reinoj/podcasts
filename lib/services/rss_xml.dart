@@ -5,11 +5,12 @@ import 'dart:io';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
+import 'package:nojcasts/services/podcast_repository.dart';
+import 'package:nojcasts/view_models/podcast_viewmodel.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
 
-import 'package:nojcasts/db/podcast_db.dart';
-import 'package:nojcasts/db/podcast_db_entry.dart';
+import 'package:nojcasts/models/podcast_entry.dart';
 import 'package:nojcasts/types/podcast_info.dart';
 import 'package:nojcasts/types/podcast_item.dart';
 import 'package:nojcasts/globals.dart';
@@ -28,8 +29,11 @@ Future<bool> trySaveRss(String url, bool update) async {
   String title = xmlRecord.$1;
   PodcastInfo podcastInfo = xmlRecord.$2;
 
-  PodcastDb db = await PodcastDb.getInstance();
-  List<PodcastDbEntry> savedPodcasts = await db.getPodcasts();
+  // PodcastDBService db = await PodcastDBService.getInstance();
+  // List<PodcastEntry> savedPodcasts = await db.getPodcasts();
+  final PodcastViewmodel viewmodel = PodcastViewmodel(podcastRepository: PodcastRepository());
+  final savedPodcasts = viewmodel.podcasts;
+
   bool exists = false;
   for (final podcast in savedPodcasts) {
     if (podcast.title == title) {
@@ -46,7 +50,7 @@ Future<bool> trySaveRss(String url, bool update) async {
       return true;
     }
   } else {
-    await db.insertPodcast(PodcastDbEntry(title, url));
+    await viewmodel.insertPodcast(PodcastEntry(title, url));
     return savePodcastInfoToFile(title, podcastInfo);
   }
 }
@@ -110,12 +114,8 @@ void savePodcastImage(XmlElement image, String title) async {
   wFile.writeAsBytesSync(response.bodyBytes);
 }
 
-bool savePodcastInfoToFile(String title, PodcastInfo podcastInfo) {
-  Globals? globals = Globals.getGlobals();
-  if (globals == null) {
-    log('Failed to get global variables.');
-    return false;
-  }
+Future<bool> savePodcastInfoToFile(String title, PodcastInfo podcastInfo) async {
+  Globals globals = await GlobalsObj().globals;
 
   File wFile = File('${globals.podcastPath}/$title.json');
   try {
@@ -128,12 +128,8 @@ bool savePodcastInfoToFile(String title, PodcastInfo podcastInfo) {
   return true;
 }
 
-PodcastInfo? getPodcastInfoFromJson(String title) {
-  Globals? globals = Globals.getGlobals();
-  if (globals == null) {
-    log('Failed to get global variables.');
-    return null;
-  }
+Future<PodcastInfo?> getPodcastInfoFromJson(String title) async {
+  Globals globals = await GlobalsObj().globals;
 
   File rFile = File('${globals.podcastPath}/$title.json');
   if (!rFile.existsSync()) {

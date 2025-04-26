@@ -8,20 +8,20 @@ class Globals {
   late String podcastPath;
   late String imagePath;
 
-  static Globals? _globals;
-
   Globals(this.documentsPath, this.nojcastsPath, this.podcastPath, this.imagePath);
+}
 
-  static Globals? getGlobals() {
-    return _globals;
-  }
+class GlobalsObj {
+  static Globals? _globals;
+  Future<Globals> get globals async => _globals ??= await initGlobals();
 
-  static Future<void> initGlobals() async {
+  static Future<Globals> initGlobals() async {
     Directory documentsDir = await getApplicationDocumentsDirectory();
     String documentsPath = documentsDir.path;
     String nojcastsPath = '$documentsPath/nojcasts';
     String podcastPath = '$nojcastsPath/podcasts';
     String imagePath = '$nojcastsPath/images';
     _globals = Globals(documentsPath, nojcastsPath, podcastPath, imagePath);
+    return _globals!;
   }
 }

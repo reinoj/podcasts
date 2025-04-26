@@ -1,9 +1,9 @@
-class PodcastDbEntry {
+class PodcastEntry {
   // final int id;
   final String title;
   final String rssUrl;
 
-  PodcastDbEntry(
+  PodcastEntry(
     // this.id,
     this.title,
     this.rssUrl,
@@ -18,8 +18,8 @@ class PodcastDbEntry {
   }
 }
 
-PodcastDbEntry fromMap(Map<String, Object?> map) {
-  return PodcastDbEntry(
+PodcastEntry fromMap(Map<String, Object?> map) {
+  return PodcastEntry(
     // map['id'] as int,
     map['title'] as String,
     map['rssUrl'] as String,

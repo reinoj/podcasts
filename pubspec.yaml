@@ -42,6 +42,7 @@ dependencies:
   path_provider: ^2.1.4
   sqflite: ^2.4.0
   xml: ^6.5.0
+  provider: ^6.1.4
 
 dev_dependencies:
   flutter_test:

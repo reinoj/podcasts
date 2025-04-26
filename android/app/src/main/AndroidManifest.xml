@@ -2,7 +2,8 @@
     <application
         android:label="nojcasts"
         android:name="${applicationName}"
-        android:icon="@mipmap/nojcasts_icon_round">
+        android:icon="@mipmap/nojcasts_icon_round"
+        android:allowBackup="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

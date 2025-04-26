@@ -3,12 +3,13 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:nojcasts/services/podcast_repository.dart';
+import 'package:nojcasts/view_models/podcast_viewmodel.dart';
 
-import 'package:nojcasts/pages/add_page.dart';
+import 'package:nojcasts/views/add_page.dart';
 import 'package:nojcasts/components/bottom_sheet_player.dart';
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/pages/main_page.dart';
-import 'package:nojcasts/db/podcast_db.dart';
+import 'package:nojcasts/views/main_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -51,7 +52,6 @@ class MainScaffold extends StatefulWidget {
 class _MainScaffoldState extends State<MainScaffold> {
   final AudioPlayer _player = AudioPlayer();
   bool _showNavBar = true;
-  PodcastDb? _podcastDb;
 
   int _currentPageIndex = 0;
   late List<Widget> _pageOptions;
@@ -63,13 +63,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 
   void initFolderAndProfile() async {
-    await Globals.initGlobals();
-    Globals? globals = Globals.getGlobals();
-    if (globals == null) {
-      return;
-    }
-
-    _podcastDb = await PodcastDb.getInstance();
+    Globals globals = await GlobalsObj().globals;
 
     Directory nojcastsDir = Directory(globals.nojcastsPath);
     if (!nojcastsDir.existsSync()) {
@@ -85,20 +79,15 @@ class _MainScaffoldState extends State<MainScaffold> {
   void initState() {
     initFolderAndProfile();
     _pageOptions = [
-      MainPage(player: _player, updateShowNavBar: updateShowNavBar),
+      MainPage(
+        player: _player,
+        updateShowNavBar: updateShowNavBar,
+        viewModel: PodcastViewmodel(podcastRepository: PodcastRepository()),
+      ),
       const AddPage(),
     ];
 
     super.initState();
-  }
-
-  @override
-  Future<void> dispose() async {
-    super.dispose();
-
-    if (_podcastDb != null) {
-      await _podcastDb?.closeDb();
-    }
   }
 
   BottomNavigationBar bottomNavigationBar() {
