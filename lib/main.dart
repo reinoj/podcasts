@@ -4,15 +4,20 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:nojcasts/services/podcast_repository.dart';
-import 'package:nojcasts/view_models/podcast_viewmodel.dart';
+import 'package:nojcasts/ui/main_page/podcast_viewmodel.dart';
 
-import 'package:nojcasts/views/add_page.dart';
-import 'package:nojcasts/components/bottom_sheet_player.dart';
+import 'package:nojcasts/ui/add_page/add_page.dart';
+import 'package:nojcasts/ui/shared/bottom_sheet_player.dart';
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/views/main_page.dart';
+import 'package:nojcasts/ui/main_page/main_page.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(Provider(
+    create: (context) => PodcastRepository(),
+    child: MyApp(),
+  ));
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -82,7 +87,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       MainPage(
         player: _player,
         updateShowNavBar: updateShowNavBar,
-        viewModel: PodcastViewmodel(podcastRepository: PodcastRepository()),
+        viewModel: MainViewmodel(podcastRepository: PodcastRepository()),
       ),
       const AddPage(),
     ];
@@ -126,7 +131,9 @@ class _MainScaffoldState extends State<MainScaffold> {
         child: _pageOptions[_currentPageIndex],
       ),
       bottomNavigationBar: _showNavBar ? bottomNavigationBar() : null,
-      bottomSheet: showBottomSheetPlayer(_player.state) ? BottomSheetPlayer(player: _player) : null,
+      bottomSheet: showBottomSheetPlayer(_player.state)
+          ? BottomSheetPlayer(player: _player)
+          : null,
     );
   }
 }

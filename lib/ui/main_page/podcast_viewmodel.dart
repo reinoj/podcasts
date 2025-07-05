@@ -6,8 +6,8 @@ import 'package:nojcasts/services/podcast_repository.dart';
 import 'package:nojcasts/utils/command.dart';
 import 'package:nojcasts/utils/result.dart';
 
-class PodcastViewmodel extends ChangeNotifier {
-  PodcastViewmodel({
+class MainViewmodel extends ChangeNotifier {
+  MainViewmodel({
     required PodcastRepository podcastRepository,
   }) : _podcastRepository = podcastRepository {
     loadPodcasts = Command0(_loadPodcasts)..execute();
@@ -18,7 +18,7 @@ class PodcastViewmodel extends ChangeNotifier {
   List<PodcastEntry> _podcasts = <PodcastEntry>[];
   List<PodcastEntry> get podcasts => _podcasts;
 
-  late final Command0 loadPodcasts;
+  late Command0 loadPodcasts;
 
   Future<Result<List<PodcastEntry>>> _loadPodcasts() async {
     Result<List<PodcastEntry>> result = await _podcastRepository.getPodcasts();
@@ -27,7 +27,7 @@ class PodcastViewmodel extends ChangeNotifier {
         _podcasts = result.value;
         notifyListeners();
       case Error<List<PodcastEntry>>():
-        log('Error retrieving podcasts.');
+        log('Error retrieving podcasts: ${result.error}');
         break;
     }
     return result;
@@ -35,6 +35,7 @@ class PodcastViewmodel extends ChangeNotifier {
 
   Future<void> insertPodcast(PodcastEntry entry) async {
     await PodcastRepository().insertPodcast(entry);
+    await _loadPodcasts();
     notifyListeners();
   }
 }

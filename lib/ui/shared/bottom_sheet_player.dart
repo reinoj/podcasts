@@ -4,7 +4,7 @@ import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:nojcasts/components/slider_bar.dart';
+import 'package:nojcasts/ui/shared/slider_bar.dart';
 
 const double bottomSheetHeight = 120.0;
 // ignore: constant_identifier_names
@@ -163,7 +163,8 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
         if (currentPosition == null) {
           return;
         }
-        int rewind15 = max(currentPosition.inMilliseconds - fifteenSeconds_ms, 0);
+        int rewind15 =
+            max(currentPosition.inMilliseconds - fifteenSeconds_ms, 0);
         widget.player.seek(Duration(milliseconds: rewind15));
       },
       icon: const Icon(
@@ -207,7 +208,9 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
         if (playerDuration == null) {
           return;
         }
-        int fastforward15 = min(currentPosition.inMilliseconds + fifteenSeconds_ms, playerDuration.inMilliseconds);
+        int fastforward15 = min(
+            currentPosition.inMilliseconds + fifteenSeconds_ms,
+            playerDuration.inMilliseconds);
         widget.player.seek(Duration(milliseconds: fastforward15));
       },
       icon: const Icon(
@@ -219,7 +222,9 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
 }
 
 bool showBottomSheetPlayer(PlayerState state) {
-  if (state == PlayerState.playing || state == PlayerState.paused || state == PlayerState.completed) {
+  if (state == PlayerState.playing ||
+      state == PlayerState.paused ||
+      state == PlayerState.completed) {
     return true;
   }
 

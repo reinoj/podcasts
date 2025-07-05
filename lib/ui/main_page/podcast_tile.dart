@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:nojcasts/models/podcast_entry.dart';
 import 'package:nojcasts/types/podcast_info.dart';
 
-import 'package:nojcasts/views/podcast_page.dart';
+import 'package:nojcasts/ui/podcast_page/podcast_page.dart';
 import 'package:nojcasts/globals.dart';
 import 'package:nojcasts/services/rss_xml.dart';
 
@@ -62,10 +62,12 @@ class _PodcastTileState extends State<PodcastTile> {
     }
     return GestureDetector(
       onTap: () async {
-        PodcastInfo? podcastInfo = await getPodcastInfoFromJson(widget.podcastDbEntry.title);
+        PodcastInfo? podcastInfo =
+            await getPodcastInfoFromJson(widget.podcastDbEntry.title);
         if (context.mounted) {
           if (podcastInfo == null) {
-            SnackBar snackBar = const SnackBar(content: Text('Unable to serialize RSS feed.'));
+            SnackBar snackBar =
+                const SnackBar(content: Text('Unable to serialize RSS feed.'));
             ScaffoldMessenger.of(context).showSnackBar(snackBar);
             return;
           }
@@ -89,7 +91,8 @@ class _PodcastTileState extends State<PodcastTile> {
       },
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(context).colorScheme.outline, width: 3.0),
+          border: Border.all(
+              color: Theme.of(context).colorScheme.outline, width: 3.0),
           borderRadius: const BorderRadius.all(
             Radius.circular(10.0),
           ),
@@ -103,7 +106,9 @@ class _PodcastTileState extends State<PodcastTile> {
               widget.podcastDbEntry.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 20.0, color: Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 20.0,
+                  color: Theme.of(context).colorScheme.onSurface),
             ),
           ],
         ),

@@ -1,17 +1,24 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 
-import 'package:nojcasts/components/podcast_tile.dart';
+import 'package:nojcasts/ui/main_page/podcast_tile.dart';
 import 'package:nojcasts/models/podcast_entry.dart';
-import 'package:nojcasts/view_models/podcast_viewmodel.dart';
+import 'package:nojcasts/ui/main_page/podcast_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class MainPage extends StatefulWidget {
   final AudioPlayer player;
   final Function(bool) updateShowNavBar;
-  final PodcastViewmodel viewModel;
+  final MainViewmodel viewModel;
 
-  const MainPage({super.key, required this.player, required this.updateShowNavBar, required this.viewModel});
+  const MainPage(
+      {super.key,
+      required this.player,
+      required this.updateShowNavBar,
+      required this.viewModel});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -30,9 +37,19 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void initState() {
-    loadPodcasts();
-
     super.initState();
+
+    loadPodcasts();
+    // widget.viewModel.podcasts.addListener(() {
+    //   _allPodcasts = widget.viewModel.podcasts;
+    //   log('Update new podcast');
+    // });
+  }
+
+  @override
+  void dispose() {
+    // widget.viewModel.removeListener(listener)
+    super.dispose();
   }
 
   @override
@@ -41,6 +58,11 @@ class _MainPageState extends State<MainPage> {
       return ListView.separated(
         itemBuilder: (BuildContext ctx, int index) {
           return PodcastTile(
+            // podcastDbEntry: Consumer<MainViewmodel>(
+            //   builder: (context, value, child) {
+            //     return value.podcasts.elementAt(index);
+            //   },
+            // ),
             podcastDbEntry: _allPodcasts.elementAt(index),
             player: widget.player,
             loadPodcasts: loadPodcasts,

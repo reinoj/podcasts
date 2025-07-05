@@ -1,8 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
-import 'package:nojcasts/components/bottom_sheet_player.dart';
-import 'package:nojcasts/components/episode_tile.dart';
+import 'package:nojcasts/ui/shared/bottom_sheet_player.dart';
+import 'package:nojcasts/ui/podcast_page/episode_tile.dart';
 import 'package:nojcasts/services/rss_xml.dart';
 import 'package:nojcasts/types/podcast_info.dart';
 
@@ -52,6 +52,12 @@ class _PodcastPageState extends State<PodcastPage> {
 
               PodcastInfo? pI = await getPodcastInfoFromJson(widget.title);
               if (pI == null) {
+                SnackBar snackBar = const SnackBar(
+                  content: Text('Unable to open podcast\'s json file.'),
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                }
                 return;
               }
 
@@ -59,13 +65,17 @@ class _PodcastPageState extends State<PodcastPage> {
                 _podcastInfo = pI;
               });
               if (succeeded) {
-                SnackBar snackBar = const SnackBar(content: Text('Successfully updated RSS feed.'));
+                SnackBar snackBar = const SnackBar(
+                  content: Text('Successfully updated RSS feed.'),
+                );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(snackBar);
                 }
               } else {
-                SnackBar snackBar =
-                    const SnackBar(content: Text('Unable to update RSS feed. Yell at the developer for the reason.'));
+                SnackBar snackBar = const SnackBar(
+                  content: Text(
+                      'Unable to update RSS feed. Yell at the developer for the reason.'),
+                );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(snackBar);
                 }
@@ -99,7 +109,8 @@ class _PodcastPageState extends State<PodcastPage> {
           padding: const EdgeInsets.all(8.0),
         ),
       ),
-      bottomSheet: _showPlayer ? BottomSheetPlayer(player: widget.player) : null,
+      bottomSheet:
+          _showPlayer ? BottomSheetPlayer(player: widget.player) : null,
     );
   }
 }

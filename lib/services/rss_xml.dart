@@ -6,7 +6,7 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 import 'package:nojcasts/services/podcast_repository.dart';
-import 'package:nojcasts/view_models/podcast_viewmodel.dart';
+import 'package:nojcasts/ui/main_page/podcast_viewmodel.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
 
@@ -31,7 +31,8 @@ Future<bool> trySaveRss(String url, bool update) async {
 
   // PodcastDBService db = await PodcastDBService.getInstance();
   // List<PodcastEntry> savedPodcasts = await db.getPodcasts();
-  final PodcastViewmodel viewmodel = PodcastViewmodel(podcastRepository: PodcastRepository());
+  final MainViewmodel viewmodel =
+      MainViewmodel(podcastRepository: PodcastRepository());
   final savedPodcasts = viewmodel.podcasts;
 
   bool exists = false;
@@ -55,7 +56,8 @@ Future<bool> trySaveRss(String url, bool update) async {
   }
 }
 
-(String, PodcastInfo)? getPodcastInfoFromXml(XmlDocument document, bool saveImage) {
+(String, PodcastInfo)? getPodcastInfoFromXml(
+    XmlDocument document, bool saveImage) {
   Iterable<XmlElement> channelIter = document.findAllElements('channel');
   if (channelIter.isEmpty) {
     log('Invalid XML from RSS feed.');
@@ -114,7 +116,8 @@ void savePodcastImage(XmlElement image, String title) async {
   wFile.writeAsBytesSync(response.bodyBytes);
 }
 
-Future<bool> savePodcastInfoToFile(String title, PodcastInfo podcastInfo) async {
+Future<bool> savePodcastInfoToFile(
+    String title, PodcastInfo podcastInfo) async {
   Globals globals = await GlobalsObj().globals;
 
   File wFile = File('${globals.podcastPath}/$title.json');
@@ -190,7 +193,8 @@ PodcastItem? getPodcastItem(XmlElement element) {
 
     description = p.body!.text;
     if (description.isEmpty) {
-      XmlElement? xmlSummary = findAndCheckForElement(element, 'itunes:summary');
+      XmlElement? xmlSummary =
+          findAndCheckForElement(element, 'itunes:summary');
       if (xmlSummary != null) {
         p = parse(xmlSummary.innerText);
         if (p.body != null) {
@@ -239,5 +243,6 @@ PodcastItem? getPodcastItem(XmlElement element) {
     return null;
   }
 
-  return PodcastItem(title, shortenedDate, description, durationMin.toString(), url);
+  return PodcastItem(
+      title, shortenedDate, description, durationMin.toString(), url);
 }
