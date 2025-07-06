@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:nojcasts/models/podcast_entry.dart';
 import 'package:nojcasts/types/podcast_info.dart';
 
-import 'package:nojcasts/ui/podcast_page/podcast_page.dart';
 import 'package:nojcasts/globals.dart';
 import 'package:nojcasts/services/rss_xml.dart';
 
@@ -13,14 +13,14 @@ class PodcastTile extends StatefulWidget {
   final AudioPlayer player;
   final PodcastEntry podcastDbEntry;
   final Function() loadPodcasts;
-  final Function(bool) updateShowNavBar;
+  // final Function(bool) updateShowNavBar;
 
   const PodcastTile({
     super.key,
     required this.player,
     required this.podcastDbEntry,
     required this.loadPodcasts,
-    required this.updateShowNavBar,
+    // required this.updateShowNavBar,
   });
 
   @override
@@ -40,12 +40,7 @@ class _PodcastTileState extends State<PodcastTile> {
     }
 
     setState(() {
-      _img = Image.file(
-        img,
-        width: 75.0,
-        height: 75.0,
-        fit: BoxFit.fill,
-      );
+      _img = Image.file(img, width: 75.0, height: 75.0, fit: BoxFit.fill);
     });
   }
 
@@ -62,40 +57,29 @@ class _PodcastTileState extends State<PodcastTile> {
     }
     return GestureDetector(
       onTap: () async {
-        PodcastInfo? podcastInfo =
-            await getPodcastInfoFromJson(widget.podcastDbEntry.title);
+        PodcastInfo? podcastInfo = await getPodcastInfoFromJson(
+          widget.podcastDbEntry.title,
+        );
         if (context.mounted) {
           if (podcastInfo == null) {
-            SnackBar snackBar =
-                const SnackBar(content: Text('Unable to serialize RSS feed.'));
+            SnackBar snackBar = const SnackBar(
+              content: Text('Unable to serialize RSS feed.'),
+            );
             ScaffoldMessenger.of(context).showSnackBar(snackBar);
             return;
           }
 
-          widget.updateShowNavBar(false);
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PodcastPage(
-                title: widget.podcastDbEntry.title,
-                initialPodcastInfo: podcastInfo,
-                rssUrl: widget.podcastDbEntry.rssUrl,
-                player: widget.player,
-              ),
-            ),
-          );
-          widget.updateShowNavBar(true);
-          widget.loadPodcasts();
-          loadImg();
+          // widget.updateShowNavBar(false);
+          context.go('/add/${widget.podcastDbEntry.title}');
         }
       },
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(
-              color: Theme.of(context).colorScheme.outline, width: 3.0),
-          borderRadius: const BorderRadius.all(
-            Radius.circular(10.0),
+            color: Theme.of(context).colorScheme.outline,
+            width: 3.0,
           ),
+          borderRadius: const BorderRadius.all(Radius.circular(10.0)),
         ),
         padding: const EdgeInsets.all(4.0),
         child: Row(
@@ -107,8 +91,9 @@ class _PodcastTileState extends State<PodcastTile> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  fontSize: 20.0,
-                  color: Theme.of(context).colorScheme.onSurface),
+                fontSize: 20.0,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ],
         ),

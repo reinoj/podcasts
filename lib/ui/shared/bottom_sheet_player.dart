@@ -47,7 +47,7 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
     const Icon(
       Icons.pause_circle_outline,
       size: 40.0,
-    )
+    ),
   ];
   late int _playPauseState;
 
@@ -61,21 +61,21 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
   @override
   void initState() {
     widget.player.getCurrentPosition().then(
-          (currentPosition) => setState(
-            () {
-              _position = currentPosition;
-              _positionString = formatDuration(_position!);
-            },
-          ),
-        );
+      (currentPosition) => setState(
+        () {
+          _position = currentPosition;
+          _positionString = formatDuration(_position!);
+        },
+      ),
+    );
     widget.player.getDuration().then(
-          (currentDuration) => setState(
-            () {
-              _duration = currentDuration;
-              _durationString = formatDuration(_duration!);
-            },
-          ),
-        );
+      (currentDuration) => setState(
+        () {
+          _duration = currentDuration;
+          _durationString = formatDuration(_duration!);
+        },
+      ),
+    );
     _initStreams();
 
     if (widget.player.state == PlayerState.paused) {
@@ -146,7 +146,7 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
               rewindButton(context),
               playPauseButton(context),
               fastForwardButton(context),
-              Text(_durationString)
+              Text(_durationString),
             ],
           ),
         ],
@@ -163,8 +163,10 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
         if (currentPosition == null) {
           return;
         }
-        int rewind15 =
-            max(currentPosition.inMilliseconds - fifteenSeconds_ms, 0);
+        int rewind15 = max(
+          currentPosition.inMilliseconds - fifteenSeconds_ms,
+          0,
+        );
         widget.player.seek(Duration(milliseconds: rewind15));
       },
       icon: const Icon(
@@ -209,8 +211,9 @@ class _BottomSheetPlayerState extends State<BottomSheetPlayer> {
           return;
         }
         int fastforward15 = min(
-            currentPosition.inMilliseconds + fifteenSeconds_ms,
-            playerDuration.inMilliseconds);
+          currentPosition.inMilliseconds + fifteenSeconds_ms,
+          playerDuration.inMilliseconds,
+        );
         widget.player.seek(Duration(milliseconds: fastforward15));
       },
       icon: const Icon(

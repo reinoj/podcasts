@@ -8,7 +8,12 @@ class Globals {
   late String podcastPath;
   late String imagePath;
 
-  Globals(this.documentsPath, this.nojcastsPath, this.podcastPath, this.imagePath);
+  Globals(
+    this.documentsPath,
+    this.nojcastsPath,
+    this.podcastPath,
+    this.imagePath,
+  );
 }
 
 class GlobalsObj {
