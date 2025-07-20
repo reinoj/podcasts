@@ -19,7 +19,10 @@ Future<bool> trySaveRss(String url, bool update) async {
     return false;
   }
 
-  (String, PodcastInfo)? xmlRecord = getPodcastInfoFromXml(document, !update);
+  (String, PodcastInfo)? xmlRecord = await getPodcastInfoFromXml(
+    document,
+    !update,
+  );
   if (xmlRecord == null) {
     return false;
   }
@@ -55,10 +58,10 @@ Future<bool> trySaveRss(String url, bool update) async {
   }
 }
 
-(String, PodcastInfo)? getPodcastInfoFromXml(
+Future<(String, PodcastInfo)?> getPodcastInfoFromXml(
   XmlDocument document,
   bool saveImage,
-) {
+) async {
   Iterable<XmlElement> channelIter = document.findAllElements('channel');
   if (channelIter.isEmpty) {
     log('Invalid XML from RSS feed.');
@@ -81,7 +84,7 @@ Future<bool> trySaveRss(String url, bool update) async {
     if (null == image) {
       return null;
     }
-    savePodcastImage(image, title.innerText);
+    await savePodcastImage(image, title.innerText);
   }
 
   List<XmlElement> itemIter = channel.findElements('item').toList();
@@ -98,12 +101,12 @@ Future<bool> trySaveRss(String url, bool update) async {
   return (title.innerText, PodcastInfo(hosts.innerText, podcastItemList));
 }
 
-void savePodcastImage(XmlElement image, String title) async {
+Future<void> savePodcastImage(XmlElement image, String title) async {
   String url = image.attributes.single.value;
   Uri uri = Uri.parse(url);
   if (!uri.isAbsolute) {
     log('URL is invalid');
-    return null;
+    return;
   }
   http.Response response = await http.get(uri);
 
