@@ -3,23 +3,20 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nojcasts/models/podcast_entry.dart';
+import 'package:nojcasts/main.dart';
+import 'package:nojcasts/models/podcast.dart';
 import 'package:nojcasts/types/podcast_info.dart';
-
-import 'package:nojcasts/globals.dart';
 import 'package:nojcasts/services/rss_xml.dart';
 
 class PodcastTile extends StatefulWidget {
   final AudioPlayer player;
-  final PodcastEntry podcastDbEntry;
-  final Function() loadPodcasts;
+  final Podcast podcast;
   // final Function(bool) updateShowNavBar;
 
   const PodcastTile({
     super.key,
     required this.player,
-    required this.podcastDbEntry,
-    required this.loadPodcasts,
+    required this.podcast,
     // required this.updateShowNavBar,
   });
 
@@ -32,11 +29,14 @@ class _PodcastTileState extends State<PodcastTile> {
 
   Future<void> loadImg() async {
     imageCache.clear();
-    Globals globals = await GlobalsObj().globals;
 
-    File img = File('${globals.imagePath}/${widget.podcastDbEntry.title}.jpg');
+    File img = File(
+      '${globals.globals!.imagePath}/${widget.podcast.title.v}.jpg',
+    );
     if (!img.existsSync()) {
-      img = File('${globals.imagePath}/${widget.podcastDbEntry.title}.png');
+      img = File(
+        '${globals.globals!.imagePath}/${widget.podcast.title.v}.png',
+      );
     }
 
     setState(() {
@@ -58,7 +58,7 @@ class _PodcastTileState extends State<PodcastTile> {
     return GestureDetector(
       onTap: () async {
         PodcastInfo? podcastInfo = await getPodcastInfoFromJson(
-          widget.podcastDbEntry.title,
+          widget.podcast.title.v ?? 'empty',
         );
         if (context.mounted) {
           if (podcastInfo == null) {
@@ -69,8 +69,7 @@ class _PodcastTileState extends State<PodcastTile> {
             return;
           }
 
-          // widget.updateShowNavBar(false);
-          context.go('/add/${widget.podcastDbEntry.title}');
+          context.go('/podcast/${widget.podcast.title.v!}');
         }
       },
       child: Container(
@@ -87,7 +86,7 @@ class _PodcastTileState extends State<PodcastTile> {
             _img!,
             const SizedBox(width: 8.0),
             Text(
-              widget.podcastDbEntry.title,
+              widget.podcast.title.v ?? 'empty',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(

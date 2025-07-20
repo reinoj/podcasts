@@ -1,12 +1,16 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nojcasts/services/podcast_repository.dart';
 import 'package:nojcasts/ui/add_page/add_page.dart';
-import 'package:nojcasts/ui/main_page/main_page.dart';
-import 'package:nojcasts/ui/main_page/podcast_viewmodel.dart';
+import 'package:nojcasts/ui/home_page/home_page.dart';
 import 'package:nojcasts/ui/podcast_page/podcast_page.dart';
 import 'package:nojcasts/ui/shared/bottom_navigation_page.dart';
+
+abstract final class Routes {
+  static const home = '/';
+  static const add = '/add';
+  static const podcast = '/podcast/:title';
+}
 
 class NavigationHelper {
   static final NavigationHelper _instance = NavigationHelper._internal();
@@ -16,9 +20,6 @@ class NavigationHelper {
   static late final GoRouter router;
 
   final AudioPlayer _player = AudioPlayer();
-  MainViewmodel mainViewmodel = MainViewmodel(
-    podcastRepository: PodcastRepository(),
-  );
 
   BuildContext get context =>
       router.routerDelegate.navigatorKey.currentContext!;
@@ -34,11 +35,6 @@ class NavigationHelper {
   static final GlobalKey<NavigatorState> podcastNavigatorKey =
       GlobalKey<NavigatorState>();
 
-  static const String mainPath = '/';
-  static const String addPath = '/add';
-  // static const String podcastPath = '/podcast';
-  static const String podcastPath = '/:title';
-
   factory NavigationHelper() {
     return _instance;
   }
@@ -52,16 +48,29 @@ class NavigationHelper {
             navigatorKey: mainNavigatorKey,
             routes: [
               GoRoute(
-                path: mainPath,
+                path: Routes.home,
                 pageBuilder: (context, state) {
                   return getPage(
-                    child: MainPage(
+                    child: HomePage(
                       player: _player,
-                      mainViewmodel: mainViewmodel,
                     ),
                     state: state,
                   );
                 },
+                routes: [
+                  GoRoute(
+                    path: Routes.podcast,
+                    pageBuilder: (context, state) {
+                      return getPage(
+                        child: PodcastPage(
+                          title: state.pathParameters['title']!,
+                          player: _player,
+                        ),
+                        state: state,
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -69,7 +78,7 @@ class NavigationHelper {
             navigatorKey: addNavigatorKey,
             routes: [
               GoRoute(
-                path: addPath,
+                path: Routes.add,
                 pageBuilder: (context, state) {
                   return getPage(
                     child: const AddPage(),
@@ -90,25 +99,11 @@ class NavigationHelper {
           );
         },
       ),
-      GoRoute(
-        path: podcastPath,
-        pageBuilder: (context, state) {
-          return getPage(
-            child: PodcastPage(
-              title: state.pathParameters['title']!,
-              viewmodel: mainViewmodel,
-              player: _player,
-              updateShowPlayer: () {},
-            ),
-            state: state,
-          );
-        },
-      ),
     ];
 
     router = GoRouter(
       navigatorKey: parentNavigatorKey,
-      initialLocation: mainPath,
+      initialLocation: Routes.home,
       routes: routes,
     );
   }

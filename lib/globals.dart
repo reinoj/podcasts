@@ -2,31 +2,39 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-class Globals {
-  late String documentsPath;
-  late String nojcastsPath;
-  late String podcastPath;
-  late String imagePath;
+class GlobalObjs {
+  final String _documentsPath;
+  final String _nojcastsPath;
+  final String _podcastPath;
+  final String _imagePath;
 
-  Globals(
-    this.documentsPath,
-    this.nojcastsPath,
-    this.podcastPath,
-    this.imagePath,
+  String get documentsPath => _documentsPath;
+  String get nojcastsPath => _nojcastsPath;
+  String get podcastPath => _podcastPath;
+  String get imagePath => _imagePath;
+
+  GlobalObjs(
+    this._documentsPath,
+    this._nojcastsPath,
+    this._podcastPath,
+    this._imagePath,
   );
 }
 
-class GlobalsObj {
-  static Globals? _globals;
-  Future<Globals> get globals async => _globals ??= await initGlobals();
+class Globals {
+  static GlobalObjs? _globals;
 
-  static Future<Globals> initGlobals() async {
+  GlobalObjs? get globals => _globals;
+  Future<void> get ready async => _globals ??= await initGlobals();
+
+  Future<GlobalObjs> initGlobals() async {
     Directory documentsDir = await getApplicationDocumentsDirectory();
     String documentsPath = documentsDir.path;
     String nojcastsPath = '$documentsPath/nojcasts';
     String podcastPath = '$nojcastsPath/podcasts';
     String imagePath = '$nojcastsPath/images';
-    _globals = Globals(documentsPath, nojcastsPath, podcastPath, imagePath);
+
+    _globals = GlobalObjs(documentsPath, nojcastsPath, podcastPath, imagePath);
     return _globals!;
   }
 }

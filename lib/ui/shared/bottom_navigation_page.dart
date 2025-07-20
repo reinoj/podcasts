@@ -17,6 +17,30 @@ class BottomNavigationPage extends StatefulWidget {
 }
 
 class _BottomNavigationPageState extends State<BottomNavigationPage> {
+  bool showPlayer = false;
+
+  @override
+  void initState() {
+    widget.player.onPlayerStateChanged.listen((it) {
+      switch (it) {
+        case PlayerState.stopped:
+        case PlayerState.disposed:
+          setState(() {
+            showPlayer = false;
+          });
+          break;
+        case PlayerState.playing:
+        case PlayerState.paused:
+        case PlayerState.completed:
+          setState(() {
+            showPlayer = true;
+          });
+          break;
+      }
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,9 +52,7 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
       body: SafeArea(
         child: widget.child,
       ),
-      bottomSheet: showBottomSheetPlayer(widget.player.state)
-          ? BottomSheetPlayer(player: widget.player)
-          : null,
+      bottomSheet: showPlayer ? BottomSheetPlayer(player: widget.player) : null,
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: widget.child.currentIndex,

@@ -5,15 +5,13 @@ import 'dart:io';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
-import 'package:nojcasts/services/podcast_repository.dart';
-import 'package:nojcasts/ui/main_page/podcast_viewmodel.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:nojcasts/main.dart';
+import 'package:uuid/uuid.dart';
 import 'package:xml/xml.dart';
 
-import 'package:nojcasts/models/podcast_entry.dart';
+import 'package:nojcasts/models/podcast.dart';
 import 'package:nojcasts/types/podcast_info.dart';
 import 'package:nojcasts/types/podcast_item.dart';
-import 'package:nojcasts/globals.dart';
 
 Future<bool> trySaveRss(String url, bool update) async {
   XmlDocument? document = await getXmlDocumentFromURL(url);
@@ -29,15 +27,11 @@ Future<bool> trySaveRss(String url, bool update) async {
   String title = xmlRecord.$1;
   PodcastInfo podcastInfo = xmlRecord.$2;
 
-  // PodcastDBService db = await PodcastDBService.getInstance();
-  // List<PodcastEntry> savedPodcasts = await db.getPodcasts();
-  final MainViewmodel viewmodel =
-      MainViewmodel(podcastRepository: PodcastRepository());
-  final savedPodcasts = viewmodel.podcasts;
+  final List<Podcast> savedPodcasts = await dbProvider.getPodcasts();
 
   bool exists = false;
   for (final podcast in savedPodcasts) {
-    if (podcast.title == title) {
+    if (podcast.title.v == title) {
       exists = true;
       break;
     }
@@ -51,13 +45,20 @@ Future<bool> trySaveRss(String url, bool update) async {
       return true;
     }
   } else {
-    await viewmodel.insertPodcast(PodcastEntry(title, url));
+    await dbProvider.addPodcast(
+      Podcast()
+        ..id.v = Uuid().v4()
+        ..title.v = title
+        ..rssUrl.v = url,
+    );
     return savePodcastInfoToFile(title, podcastInfo);
   }
 }
 
 (String, PodcastInfo)? getPodcastInfoFromXml(
-    XmlDocument document, bool saveImage) {
+  XmlDocument document,
+  bool saveImage,
+) {
   Iterable<XmlElement> channelIter = document.findAllElements('channel');
   if (channelIter.isEmpty) {
     log('Invalid XML from RSS feed.');
@@ -108,19 +109,24 @@ void savePodcastImage(XmlElement image, String title) async {
 
   String fileType = url.substring(url.length - 3).toLowerCase();
   if ('jpg' != fileType && 'png' != fileType) {
-    log('Unsupported image format "$fileType". Currently only jpg and png is supported.');
+    log(
+      'Unsupported image format "$fileType". Currently only jpg and png is supported.',
+    );
   }
 
-  Directory directory = await getApplicationDocumentsDirectory();
-  File wFile = File('${directory.path}/nojcasts/images/$title.$fileType');
-  wFile.writeAsBytesSync(response.bodyBytes);
+  File wFile = File('${globals.globals!.imagePath}/$title.$fileType');
+  try {
+    wFile.writeAsBytesSync(response.bodyBytes);
+  } on FileSystemException {
+    log('Failed to save $title podcast image');
+  }
 }
 
 Future<bool> savePodcastInfoToFile(
-    String title, PodcastInfo podcastInfo) async {
-  Globals globals = await GlobalsObj().globals;
-
-  File wFile = File('${globals.podcastPath}/$title.json');
+  String title,
+  PodcastInfo podcastInfo,
+) async {
+  File wFile = File('${globals.globals!.podcastPath}/$title.json');
   try {
     wFile.writeAsStringSync(jsonEncode(podcastInfo.toJson()));
   } on FileSystemException {
@@ -132,9 +138,7 @@ Future<bool> savePodcastInfoToFile(
 }
 
 Future<PodcastInfo?> getPodcastInfoFromJson(String title) async {
-  Globals globals = await GlobalsObj().globals;
-
-  File rFile = File('${globals.podcastPath}/$title.json');
+  File rFile = File('${globals.globals!.podcastPath}/$title.json');
   if (!rFile.existsSync()) {
     log('File "$title.json" does not exist');
     return null;
@@ -193,8 +197,10 @@ PodcastItem? getPodcastItem(XmlElement element) {
 
     description = p.body!.text;
     if (description.isEmpty) {
-      XmlElement? xmlSummary =
-          findAndCheckForElement(element, 'itunes:summary');
+      XmlElement? xmlSummary = findAndCheckForElement(
+        element,
+        'itunes:summary',
+      );
       if (xmlSummary != null) {
         p = parse(xmlSummary.innerText);
         if (p.body != null) {
@@ -244,5 +250,10 @@ PodcastItem? getPodcastItem(XmlElement element) {
   }
 
   return PodcastItem(
-      title, shortenedDate, description, durationMin.toString(), url);
+    title,
+    shortenedDate,
+    description,
+    durationMin.toString(),
+    url,
+  );
 }

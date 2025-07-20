@@ -4,20 +4,29 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:nojcasts/globals.dart';
-import 'package:nojcasts/ui/shared/navigation_helper.dart';
+import 'package:nojcasts/services/podcast_db_provider.dart';
+import 'package:nojcasts/ui/shared/router.dart';
 
-void main() {
+late PodcastDbProvider dbProvider;
+late Globals globals;
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  dbProvider = PodcastDbProvider();
+  await dbProvider.ready;
+  globals = Globals();
+  await globals.ready;
+
   runApp(const App());
 }
 
 void initFolderAndProfile() async {
-  Globals globals = await GlobalsObj().globals;
-
-  Directory nojcastsDir = Directory(globals.nojcastsPath);
+  Directory nojcastsDir = Directory(globals.globals!.nojcastsPath);
   if (!nojcastsDir.existsSync()) {
-    Directory podDir = Directory(globals.podcastPath);
+    Directory podDir = Directory(globals.globals!.podcastPath);
     podDir.createSync(recursive: true);
-    Directory imgDir = Directory(globals.imagePath);
+    Directory imgDir = Directory(globals.globals!.imagePath);
     imgDir.createSync(recursive: true);
     log('Created nojcasts, podcasts, and images directories.');
   }
